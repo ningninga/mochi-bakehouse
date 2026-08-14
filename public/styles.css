@@ -209,7 +209,7 @@ textarea {
 
 .hero-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 28px;
 }
 
@@ -229,6 +229,8 @@ textarea {
 .hero-copy {
   padding: clamp(28px, 5vw, 56px);
   border-radius: 40px;
+  max-width: 980px;
+  margin: 0 auto;
   animation: rise-in 650ms ease both;
 }
 
@@ -403,10 +405,12 @@ textarea {
 }
 
 .intro-strip {
-  display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.3fr);
-  gap: 24px;
-  align-items: start;
+  display: block;
+}
+
+.intro-strip > div:first-child {
+  max-width: 700px;
+  margin-bottom: 24px;
 }
 
 .intro-cards {
@@ -462,6 +466,8 @@ textarea {
 }
 
 .product-card {
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   border-radius: 28px;
 }
@@ -472,6 +478,9 @@ textarea {
 }
 
 .product-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   padding: 20px;
 }
 
@@ -508,8 +517,10 @@ textarea {
 
 .product-head {
   display: flex;
+  align-items: start;
   justify-content: space-between;
   gap: 12px;
+  min-height: 62px;
   margin-bottom: 12px;
 }
 
@@ -528,6 +539,7 @@ textarea {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  min-height: 34px;
   margin: 16px 0 18px;
 }
 
@@ -544,7 +556,8 @@ textarea {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-top: 18px;
+  margin-top: auto;
+  padding-top: 18px;
 }
 
 .meta-stack p {
