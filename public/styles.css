@@ -268,6 +268,8 @@ textarea {
   border-radius: 32px;
   padding: 26px;
   align-self: end;
+  background: rgba(255, 247, 231, 0.9);
+  border-style: dashed;
   animation: rise-in 650ms ease both;
   animation-delay: 120ms;
 }
@@ -275,6 +277,97 @@ textarea {
 .highlight-list {
   padding-left: 20px;
   margin: 0;
+}
+
+.about-strip {
+  padding-bottom: 28px;
+}
+
+.about-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 32px;
+  overflow: hidden;
+  padding: clamp(26px, 5vw, 46px);
+  border: 1px dashed rgba(154, 71, 38, 0.28);
+  border-radius: 30px;
+  background:
+    linear-gradient(135deg, rgba(255, 249, 236, 0.96), rgba(247, 225, 194, 0.82)),
+    var(--panel);
+  box-shadow: 0 18px 50px rgba(93, 52, 25, 0.09);
+}
+
+.about-card::after {
+  position: absolute;
+  right: 22%;
+  bottom: -80px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: rgba(196, 105, 63, 0.1);
+  content: "";
+}
+
+.about-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+}
+
+.about-copy h3 {
+  max-width: 17ch;
+  margin-bottom: 16px;
+  font-size: clamp(1.9rem, 4vw, 3.2rem);
+  line-height: 1.05;
+}
+
+.about-copy > p:not(.eyebrow) {
+  max-width: 700px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.about-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-top: 28px;
+}
+
+.about-stats div {
+  display: grid;
+  gap: 3px;
+}
+
+.about-stats strong {
+  color: var(--accent-strong);
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+}
+
+.about-stats span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.about-stamp {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  display: grid;
+  width: 116px;
+  height: 116px;
+  place-items: center;
+  border: 1px solid rgba(154, 71, 38, 0.5);
+  border-radius: 50%;
+  color: var(--accent-strong);
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  line-height: 1.05;
+  text-align: center;
+  transform: rotate(8deg);
 }
 
 .section {
@@ -686,9 +779,26 @@ textarea:focus {
   }
 
   .hero-copy,
-  .hero-highlight {
+  .hero-highlight,
+  .about-card {
     padding: 24px 20px;
     border-radius: 24px;
+  }
+
+  .about-card {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .about-copy h3 {
+    max-width: none;
+  }
+
+  .about-stamp {
+    justify-self: start;
+    width: 92px;
+    height: 92px;
+    font-size: 0.86rem;
   }
 
   .hero-actions,
