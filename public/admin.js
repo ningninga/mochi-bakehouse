@@ -2,9 +2,152 @@ const productForm = document.querySelector("#product-form");
 const productFeedback = document.querySelector("#product-feedback");
 const adminProducts = document.querySelector("#admin-products");
 const ordersList = document.querySelector("#orders-list");
+const ingredientRows = document.querySelector("#ingredient-rows");
+const addIngredientButton = document.querySelector("#add-ingredient");
+const costingInputs = {
+  yield: document.querySelector("#cost-yield"),
+  salePrice: document.querySelector("#cost-sale-price"),
+  ovenPower: document.querySelector("#cost-oven-power"),
+  ovenHours: document.querySelector("#cost-oven-hours"),
+  electricityRate: document.querySelector("#cost-electricity-rate"),
+};
+const costingResults = {
+  ingredients: document.querySelector("#cost-ingredients"),
+  electricity: document.querySelector("#cost-electricity"),
+  batch: document.querySelector("#cost-batch"),
+  unit: document.querySelector("#cost-unit"),
+  profitUnit: document.querySelector("#cost-profit-unit"),
+  margin: document.querySelector("#cost-margin"),
+  profitBatch: document.querySelector("#cost-profit-batch"),
+};
 
 let productState = [];
 let uploadedImageData = "";
+const costingStorageKey = "mochi-costing-draft";
+let ingredients = [];
+
+function money(value) {
+  return `€${value.toFixed(2)}`;
+}
+
+function emptyIngredient() {
+  return { name: "", amount: 0, packSize: 1000, packPrice: 0 };
+}
+
+function loadCostingDraft() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(costingStorageKey) || "null");
+    if (saved?.ingredients?.length) {
+      ingredients = saved.ingredients;
+    } else {
+      ingredients = [emptyIngredient()];
+    }
+    Object.entries(costingInputs).forEach(([key, input]) => {
+      if (saved?.[key] !== undefined) {
+        input.value = saved[key];
+      }
+    });
+  } catch {
+    ingredients = [emptyIngredient()];
+  }
+}
+
+function saveCostingDraft() {
+  const draft = {
+    ingredients,
+    ...Object.fromEntries(Object.entries(costingInputs).map(([key, input]) => [key, input.value])),
+  };
+  localStorage.setItem(costingStorageKey, JSON.stringify(draft));
+}
+
+function renderIngredients() {
+  ingredientRows.innerHTML = ingredients
+    .map(
+      (ingredient, index) => `
+        <div class="ingredient-row" data-ingredient-index="${index}">
+          <label>
+            Ingredient
+            <input data-ingredient-field="name" type="text" value="${ingredient.name}" placeholder="e.g. Flour" />
+          </label>
+          <label>
+            Used (g)
+            <input data-ingredient-field="amount" type="number" min="0" step="0.1" value="${ingredient.amount}" />
+          </label>
+          <label>
+            Pack size (g)
+            <input data-ingredient-field="packSize" type="number" min="0" step="1" value="${ingredient.packSize}" />
+          </label>
+          <label>
+            Pack price (EUR)
+            <input data-ingredient-field="packPrice" type="number" min="0" step="0.01" value="${ingredient.packPrice}" />
+          </label>
+          <button class="ingredient-remove" type="button" data-remove-ingredient="${index}" aria-label="Remove ingredient">×</button>
+        </div>
+      `
+    )
+    .join("");
+}
+
+function calculateCosting() {
+  const ingredientCost = ingredients.reduce((total, ingredient) => {
+    const amount = Number(ingredient.amount) || 0;
+    const packSize = Number(ingredient.packSize) || 0;
+    const packPrice = Number(ingredient.packPrice) || 0;
+    return total + (packSize > 0 ? (amount / packSize) * packPrice : 0);
+  }, 0);
+  const yieldCount = Math.max(1, Number(costingInputs.yield.value) || 1);
+  const salePrice = Math.max(0, Number(costingInputs.salePrice.value) || 0);
+  const energyKwh =
+    Math.max(0, Number(costingInputs.ovenPower.value) || 0) *
+    Math.max(0, Number(costingInputs.ovenHours.value) || 0);
+  const electricityCost = energyKwh * Math.max(0, Number(costingInputs.electricityRate.value) || 0);
+  const batchCost = ingredientCost + electricityCost;
+  const unitCost = batchCost / yieldCount;
+  const profitUnit = salePrice - unitCost;
+  const profitBatch = profitUnit * yieldCount;
+  const margin = salePrice > 0 ? (profitUnit / salePrice) * 100 : 0;
+
+  costingResults.ingredients.textContent = money(ingredientCost);
+  costingResults.electricity.textContent = money(electricityCost);
+  costingResults.batch.textContent = money(batchCost);
+  costingResults.unit.textContent = money(unitCost);
+  costingResults.profitUnit.textContent = money(profitUnit);
+  costingResults.margin.textContent = `${margin.toFixed(1)}%`;
+  costingResults.profitBatch.textContent = money(profitBatch);
+  saveCostingDraft();
+}
+
+function initCostingCalculator() {
+  loadCostingDraft();
+  renderIngredients();
+  calculateCosting();
+
+  addIngredientButton.addEventListener("click", () => {
+    ingredients.push(emptyIngredient());
+    renderIngredients();
+    calculateCosting();
+  });
+
+  ingredientRows.addEventListener("input", (event) => {
+    const field = event.target.closest("[data-ingredient-field]");
+    const row = event.target.closest("[data-ingredient-index]");
+    if (!field || !row) return;
+    const index = Number(row.dataset.ingredientIndex);
+    const key = field.dataset.ingredientField;
+    ingredients[index][key] = key === "name" ? field.value : Number(field.value) || 0;
+    calculateCosting();
+  });
+
+  ingredientRows.addEventListener("click", (event) => {
+    const removeButton = event.target.closest("[data-remove-ingredient]");
+    if (!removeButton || ingredients.length === 1) return;
+    ingredients.splice(Number(removeButton.dataset.removeIngredient), 1);
+    renderIngredients();
+    calculateCosting();
+  });
+
+  Object.values(costingInputs).forEach((input) => input.addEventListener("input", calculateCosting));
+}
 
 function setFeedback(target, message, type = "success") {
   target.hidden = false;
@@ -230,6 +373,8 @@ adminProducts.addEventListener("click", async (event) => {
     setFeedback(productFeedback, error.message, "error");
   }
 });
+
+initCostingCalculator();
 
 Promise.all([fetchProducts(), fetchOrders()]).catch((error) => {
   setFeedback(productFeedback, error.message, "error");

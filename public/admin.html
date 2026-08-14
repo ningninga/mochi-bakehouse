@@ -126,6 +126,78 @@
         </article>
       </section>
 
+      <section class="panel costing-panel" id="cost-calculator">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Recipe costing</p>
+            <h2>Calculate your real cost and profit</h2>
+          </div>
+          <span class="costing-badge">EUR</span>
+        </div>
+        <p class="costing-intro">
+          Add the ingredients used in one batch, your oven details, and the selling price. The calculator updates instantly and saves the draft in this browser.
+        </p>
+
+        <div class="costing-layout">
+          <div class="costing-inputs">
+            <div class="costing-section-head">
+              <div>
+                <p class="eyebrow">Ingredients</p>
+                <h3>What goes into one batch?</h3>
+              </div>
+              <button class="small-button ghost" id="add-ingredient" type="button">+ Add ingredient</button>
+            </div>
+            <div id="ingredient-rows" class="ingredient-rows"></div>
+
+            <div class="costing-section-head costing-section-head-spaced">
+              <div>
+                <p class="eyebrow">Batch details</p>
+                <h3>Production and pricing</h3>
+              </div>
+            </div>
+            <div class="costing-fields">
+              <label>
+                Portions from this batch
+                <input id="cost-yield" type="number" min="1" step="1" value="10" />
+              </label>
+              <label>
+                Selling price per portion (EUR)
+                <input id="cost-sale-price" type="number" min="0" step="0.01" value="8" />
+              </label>
+              <label>
+                Oven power (kW)
+                <input id="cost-oven-power" type="number" min="0" step="0.01" value="2.4" />
+              </label>
+              <label>
+                Oven time (hours)
+                <input id="cost-oven-hours" type="number" min="0" step="0.05" value="1" />
+              </label>
+              <label>
+                Electricity rate (EUR / kWh)
+                <input id="cost-electricity-rate" type="number" min="0" step="0.001" value="0.32" />
+              </label>
+            </div>
+            <p class="costing-note">Use the unit rate from your own Electric Ireland bill. Standing charges and VAT are not included automatically.</p>
+          </div>
+
+          <div class="costing-results" aria-live="polite">
+            <p class="eyebrow">Your estimate</p>
+            <div class="cost-result-grid">
+              <div><span>Ingredient cost</span><strong id="cost-ingredients">€0.00</strong></div>
+              <div><span>Electricity cost</span><strong id="cost-electricity">€0.00</strong></div>
+              <div><span>Total batch cost</span><strong id="cost-batch">€0.00</strong></div>
+              <div><span>Cost per portion</span><strong id="cost-unit">€0.00</strong></div>
+              <div class="result-highlight"><span>Profit per portion</span><strong id="cost-profit-unit">€0.00</strong></div>
+              <div class="result-highlight"><span>Profit margin</span><strong id="cost-margin">0.0%</strong></div>
+            </div>
+            <div class="cost-summary">
+              <span>Estimated profit for this batch</span>
+              <strong id="cost-profit-batch">€0.00</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="panel orders-panel">
         <div class="panel-head">
           <div>

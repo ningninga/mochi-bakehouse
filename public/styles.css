@@ -716,6 +716,156 @@ textarea:focus {
   gap: 16px;
 }
 
+.costing-panel {
+  background: linear-gradient(135deg, rgba(255, 251, 246, 0.94), rgba(250, 236, 218, 0.9));
+}
+
+.costing-badge {
+  padding: 8px 12px;
+  border-radius: 999px;
+  color: var(--accent-strong);
+  background: rgba(196, 105, 63, 0.12);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.costing-intro,
+.costing-note {
+  max-width: 760px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.costing-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.8fr);
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.costing-section-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.costing-section-head h3 {
+  margin: 0;
+  font-family: var(--font-heading);
+}
+
+.costing-section-head-spaced {
+  margin-top: 28px;
+}
+
+.ingredient-rows {
+  display: grid;
+  gap: 12px;
+}
+
+.ingredient-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.25fr) repeat(3, minmax(90px, 0.8fr)) auto;
+  gap: 10px;
+  align-items: end;
+  padding: 14px;
+  border: 1px dashed rgba(105, 71, 44, 0.18);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.52);
+}
+
+.ingredient-row label {
+  font-size: 0.82rem;
+}
+
+.ingredient-row input {
+  padding: 10px 11px;
+  font-size: 0.9rem;
+}
+
+.ingredient-remove {
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 12px;
+  color: var(--accent-strong);
+  background: rgba(196, 105, 63, 0.1);
+  cursor: pointer;
+  font-size: 1.4rem;
+}
+
+.costing-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.costing-fields label {
+  font-size: 0.88rem;
+}
+
+.costing-results {
+  align-self: start;
+  padding: 24px;
+  border-radius: 24px;
+  background: #3c2b23;
+  color: #fff8ee;
+  box-shadow: 0 18px 40px rgba(60, 43, 35, 0.18);
+}
+
+.costing-results .eyebrow {
+  color: #e9b27c;
+}
+
+.cost-result-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.cost-result-grid > div {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  border: 1px solid rgba(255, 248, 238, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 248, 238, 0.06);
+}
+
+.cost-result-grid span,
+.cost-summary span {
+  color: rgba(255, 248, 238, 0.68);
+  font-size: 0.78rem;
+}
+
+.cost-result-grid strong {
+  font-size: 1.2rem;
+}
+
+.cost-result-grid .result-highlight {
+  border-color: rgba(233, 178, 124, 0.42);
+  background: rgba(233, 178, 124, 0.12);
+}
+
+.cost-summary {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 248, 238, 0.18);
+}
+
+.cost-summary strong {
+  color: #f4c18d;
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+}
+
 .checkbox-row {
   display: flex;
   align-items: center;
@@ -798,6 +948,10 @@ textarea:focus {
   }
 
   .intro-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .costing-layout {
     grid-template-columns: 1fr;
   }
 }
@@ -984,6 +1138,24 @@ textarea:focus {
   .admin-product-controls,
   .cancel-form {
     grid-template-columns: 1fr;
+  }
+
+  .costing-section-head {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .ingredient-row,
+  .costing-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ingredient-row label:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .ingredient-remove {
+    width: 100%;
   }
 
 }
