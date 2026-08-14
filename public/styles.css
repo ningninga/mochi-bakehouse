@@ -123,6 +123,10 @@ textarea {
   background: rgba(255, 251, 246, 0.72);
 }
 
+.nav-mobile {
+  display: none;
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -202,6 +206,7 @@ textarea {
   padding: 10px 14px;
   border-radius: 999px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .language-button.is-active {
@@ -827,18 +832,48 @@ textarea:focus {
 
   .topbar-actions {
     width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
     justify-content: space-between;
     gap: 8px;
   }
 
   .site-nav {
+    flex: 1;
+    min-width: 0;
     justify-content: flex-start;
     gap: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .site-nav::-webkit-scrollbar {
+    display: none;
   }
 
   .site-nav a {
     padding: 8px 7px;
     font-size: 0.76rem;
+    white-space: nowrap;
+  }
+
+  .language-toggle {
+    flex-shrink: 0;
+    padding: 3px;
+  }
+
+  .language-button {
+    padding: 8px 10px;
+  }
+
+  .nav-desktop {
+    display: none;
+  }
+
+  .nav-mobile {
+    display: inline;
   }
 
   .brand {
