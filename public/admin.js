@@ -16,7 +16,11 @@ const productEditForm = document.querySelector("#product-edit-form");
 const productEditTitle = document.querySelector("#product-edit-title");
 const productEditFeedback = document.querySelector("#product-edit-feedback");
 const translationFeedback = document.querySelector("#translation-feedback");
+const translateNewProductButton = document.querySelector("#translate-new-product");
+const translateEditProductButton = document.querySelector("#translate-edit-product");
+const editImageFile = document.querySelector("#edit-image-file");
 let editingProductId = "";
+let uploadedEditImageData = "";
 const translationTimers = new Map();
 const costingInputs = {
   yield: document.querySelector("#cost-yield"),
@@ -388,6 +392,34 @@ function queueNewProductTranslation(sourceField) {
   queueTranslation(productForm, sourceField, productFeedback, "name");
 }
 
+async function translateAllFields(form, feedbackTarget, targetSelector) {
+  const fields = [...form.querySelectorAll("[data-translate-source]")].filter((field) => field.value.trim());
+  if (!fields.length) {
+    setFeedback(feedbackTarget, "Enter at least one Chinese field first.", "error");
+    return;
+  }
+
+  setFeedback(feedbackTarget, "Translating all English fields...", "success");
+  try {
+    await Promise.all(
+      fields.map(async (sourceField) => {
+        const response = await fetch("/api/translate-product-field", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: sourceField.value.trim(), field: sourceField.dataset.translateSource }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Unable to translate this field.");
+        const target = form.querySelector(`${targetSelector}="${sourceField.dataset.translateTarget}"`);
+        if (target) target.value = result.translated;
+      })
+    );
+    setFeedback(feedbackTarget, "All English fields have been filled. You can edit them before saving.", "success");
+  } catch (error) {
+    setFeedback(feedbackTarget, error.message, "error");
+  }
+}
+
 async function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -574,6 +606,8 @@ adminProducts.addEventListener("click", async (event) => {
       setValue("price", product.price);
       setValue("stock", product.stock);
       setValue("image", product.image);
+      uploadedEditImageData = "";
+      editImageFile.value = "";
       clearFeedback(productEditFeedback);
       clearFeedback(translationFeedback);
       productEditDialog.showModal();
@@ -644,12 +678,24 @@ adminProducts.addEventListener("click", async (event) => {
 
 document.querySelector("#close-product-edit").addEventListener("click", () => productEditDialog.close());
 
-productEditForm.querySelectorAll("[data-translate-source]").forEach((field) => {
-  field.addEventListener("input", () => queueProductTranslation(field));
-});
+translateEditProductButton.addEventListener("click", () =>
+  translateAllFields(productEditForm, translationFeedback, "[data-edit-field]")
+);
 
-productForm.querySelectorAll("[data-translate-source]").forEach((field) => {
-  field.addEventListener("input", () => queueNewProductTranslation(field));
+translateNewProductButton.addEventListener("click", () =>
+  translateAllFields(productForm, productFeedback, "[name]")
+);
+
+editImageFile.addEventListener("change", async (event) => {
+  const [file] = event.target.files;
+  if (!file) return;
+  try {
+    uploadedEditImageData = await fileToDataUrl(file);
+    productEditForm.querySelector('[data-edit-field="image"]').value = "";
+    setFeedback(productEditFeedback, "Local image selected. Save product details to upload it.", "success");
+  } catch (error) {
+    setFeedback(productEditFeedback, error.message, "error");
+  }
 });
 
 productEditForm.addEventListener("submit", async (event) => {
@@ -673,7 +719,7 @@ productEditForm.addEventListener("submit", async (event) => {
         pickupWindowEn: getValue("pickupWindowEn"),
         price: Number(getValue("price")),
         stock: Number(getValue("stock")),
-        image: getValue("image"),
+        image: uploadedEditImageData || getValue("image"),
       }),
     });
     const result = await response.json();

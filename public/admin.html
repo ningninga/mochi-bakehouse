@@ -111,6 +111,7 @@
             </label>
 
             <p id="product-feedback" class="form-feedback" hidden></p>
+            <button class="small-button ghost" id="translate-new-product" type="button">Translate all to English</button>
             <button class="button primary full" type="submit">Publish product</button>
           </form>
         </article>
@@ -257,8 +258,10 @@
           <label>Pickup window (English)<input data-edit-field="pickupWindowEn" type="text" /></label>
           <label>Price (EUR)<input data-edit-field="price" type="number" min="0" step="0.01" required /></label>
           <label>Stock<input data-edit-field="stock" type="number" min="0" step="1" required /></label>
-          <label class="admin-edit-wide">Image URL<input data-edit-field="image" type="url" required /></label>
+          <label class="admin-edit-wide">Image URL<input data-edit-field="image" type="url" /></label>
+          <label class="admin-edit-wide">Or upload a local image<input id="edit-image-file" type="file" accept="image/*" /></label>
         </div>
+        <button class="small-button ghost full" id="translate-edit-product" type="button">Translate all to English</button>
         <p id="product-edit-feedback" class="form-feedback" hidden></p>
         <p id="translation-feedback" class="form-feedback" hidden></p>
         <button class="button primary full" type="submit">Save product details</button>
