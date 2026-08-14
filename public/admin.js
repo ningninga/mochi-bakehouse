@@ -47,7 +47,7 @@ function renderProducts() {
           <div class="admin-product-head">
             <div>
               <h3 class="product-title">${product.name}</h3>
-              <p class="muted-text">${product.category || "当日限定"} · €${product.price} · ${
+              <p class="muted-text">${product.category || "当日限定"} / EUR ${product.price} / ${
                 product.active ? "Live" : "Hidden"
               }</p>
             </div>
@@ -88,7 +88,7 @@ function renderOrders(orders) {
             </div>
             <span class="tag">${order.quantity} reserved</span>
           </div>
-          <p><strong>${order.customerName}</strong> · ${order.customerPhone}</p>
+          <p><strong>${order.customerName}</strong> / ${order.customerPhone}</p>
           <p class="muted-text">${order.note || "No notes"}</p>
         </article>
       `
