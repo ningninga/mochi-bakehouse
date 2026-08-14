@@ -420,13 +420,48 @@ async function translateAllFields(form, feedbackTarget, targetSelector) {
   }
 }
 
-async function fileToDataUrl(file) {
+const MAX_IMAGE_DIMENSION = 1600;
+const MAX_UPLOAD_BYTES = 12 * 1024 * 1024;
+
+function loadImageFile(file) {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("Unable to read the image."));
-    reader.readAsDataURL(file);
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("This image format cannot be displayed. Please choose a JPG, PNG, or WebP image."));
+    };
+    image.src = objectUrl;
   });
+}
+
+async function fileToDataUrl(file) {
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Please choose an image file.");
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    throw new Error("The image is too large. Please choose an image smaller than 12 MB.");
+  }
+
+  const image = await loadImageFile(file);
+  const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(image.naturalWidth, image.naturalHeight));
+  const width = Math.max(1, Math.round(image.naturalWidth * scale));
+  const height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, width, height);
+  context.drawImage(image, 0, 0, width, height);
+
+  // Normalizing uploads to JPEG avoids HEIC/large-original compatibility
+  // problems and keeps the product API response reasonably small.
+  return canvas.toDataURL("image/jpeg", 0.84);
 }
 
 function formatDate(dateString) {

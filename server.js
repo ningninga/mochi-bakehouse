@@ -257,6 +257,17 @@ function sanitizeProductPayload(payload, { partial = false } = {}) {
     if (!image) {
       throw new Error("请上传或填写面包图片");
     }
+    const isSupportedDataUrl = /^data:image\/(?:jpeg|png|webp);base64,[a-z0-9+/=]+$/i.test(image);
+    let isWebUrl = false;
+    try {
+      const imageUrl = new URL(image);
+      isWebUrl = imageUrl.protocol === "https:" || imageUrl.protocol === "http:";
+    } catch {
+      isWebUrl = false;
+    }
+    if (!isSupportedDataUrl && !isWebUrl) {
+      throw new Error("图片格式无效，请上传 JPG、PNG、WebP，或填写有效图片链接");
+    }
     product.image = image;
   }
 
