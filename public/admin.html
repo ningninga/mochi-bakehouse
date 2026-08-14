@@ -14,9 +14,24 @@
   </head>
   <body class="admin-page">
     <div class="grain"></div>
-    <main class="admin-layout">
+    <section id="admin-login" class="admin-login panel">
+      <p class="eyebrow">Admin access</p>
+      <h1>Sign in to manage Mochi Bakehouse</h1>
+      <p class="muted-text">Product management, reservations, costing, and translation tools are protected.</p>
+      <form id="admin-login-form" class="stack-form">
+        <label>
+          Admin password
+          <input id="admin-password" type="password" autocomplete="current-password" required />
+        </label>
+        <p id="admin-login-feedback" class="form-feedback" hidden></p>
+        <button class="button primary full" type="submit">Sign in</button>
+      </form>
+    </section>
+
+    <main id="admin-main" class="admin-layout" hidden>
       <section class="admin-intro">
         <a class="admin-link back-link" href="/index.html">Back to storefront</a>
+        <button class="small-button ghost" id="admin-logout" type="button">Sign out</button>
         <p class="eyebrow">Admin</p>
         <h1>Add bakes, manage stock, and view reservations</h1>
         <p>

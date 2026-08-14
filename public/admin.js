@@ -19,6 +19,12 @@ const translationFeedback = document.querySelector("#translation-feedback");
 const translateNewProductButton = document.querySelector("#translate-new-product");
 const translateEditProductButton = document.querySelector("#translate-edit-product");
 const editImageFile = document.querySelector("#edit-image-file");
+const adminLogin = document.querySelector("#admin-login");
+const adminMain = document.querySelector("#admin-main");
+const adminLoginForm = document.querySelector("#admin-login-form");
+const adminPasswordInput = document.querySelector("#admin-password");
+const adminLoginFeedback = document.querySelector("#admin-login-feedback");
+const adminLogoutButton = document.querySelector("#admin-logout");
 let editingProductId = "";
 let uploadedEditImageData = "";
 const translationTimers = new Map();
@@ -487,7 +493,7 @@ function renderProducts() {
             <div>
               <h3 class="product-title">${product.name}</h3>
               <p class="muted-text">${product.nameEn || "English name not set"}</p>
-              <p class="muted-text">${product.category || "当日限定"} / EUR ${product.price} / ${
+              <p class="muted-text">${product.category || "Limited Drop"} / EUR ${product.price} / ${
                 product.active ? "Live" : "Hidden"
               }</p>
             </div>
@@ -496,7 +502,10 @@ function renderProducts() {
             </span>
           </div>
           <p class="muted-text">Allergens: ${product.allergens?.length ? product.allergens.join(" / ") : "None listed"}</p>
-          <button class="small-button admin-edit-button" type="button" data-edit-product="${product.id}">Edit product</button>
+          <div class="admin-product-actions">
+            <button class="small-button admin-edit-button" type="button" data-edit-product="${product.id}">Edit product</button>
+            <button class="small-button danger" type="button" data-delete-product="${product.id}">Delete product</button>
+          </div>
         </article>
       `
     )
@@ -555,7 +564,7 @@ productForm.imageFile.addEventListener("change", async (event) => {
 
   try {
     uploadedImageData = await fileToDataUrl(file);
-    setFeedback(productFeedback, "图片已读取，提交商品时会一起保存。", "success");
+    setFeedback(productFeedback, "Image loaded. It will be saved with the product.", "success");
   } catch (error) {
     setFeedback(productFeedback, error.message, "error");
   }
@@ -604,7 +613,7 @@ productForm.addEventListener("submit", async (event) => {
 
     productForm.reset();
     uploadedImageData = "";
-    setFeedback(productFeedback, `已发布：${result.name}`, "success");
+    setFeedback(productFeedback, `Published: ${result.name}`, "success");
     await Promise.all([fetchProducts(), fetchOrders()]);
   } catch (error) {
     setFeedback(productFeedback, error.message, "error");
@@ -699,6 +708,8 @@ adminProducts.addEventListener("click", async (event) => {
 
     if (deleteButton) {
       const productId = deleteButton.dataset.deleteProduct;
+      const product = productState.find((item) => item.id === productId);
+      if (!product || !window.confirm(`Delete ${product.name}? This cannot be undone.`)) return;
       const response = await fetch(`/api/products/${productId}`, { method: "DELETE" });
       const result = await response.json();
       if (!response.ok) {
@@ -767,8 +778,51 @@ productEditForm.addEventListener("submit", async (event) => {
   }
 });
 
-initCostingCalculator();
+async function initializeAdmin() {
+  const sessionResponse = await fetch("/api/admin/session");
+  const session = await sessionResponse.json();
+  if (!session.authenticated) {
+    adminLogin.hidden = false;
+    adminMain.hidden = true;
+    adminPasswordInput.focus();
+    return;
+  }
 
-Promise.all([fetchProducts(), fetchOrders()]).catch((error) => {
-  setFeedback(productFeedback, error.message, "error");
+  adminLogin.hidden = true;
+  adminMain.hidden = false;
+  initCostingCalculator();
+  Promise.all([fetchProducts(), fetchOrders()]).catch((error) => {
+    setFeedback(productFeedback, error.message, "error");
+  });
+}
+
+adminLoginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  adminLoginFeedback.hidden = true;
+  try {
+    const response = await fetch("/api/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: adminPasswordInput.value }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Unable to sign in.");
+    adminPasswordInput.value = "";
+    await initializeAdmin();
+  } catch (error) {
+    adminLoginFeedback.hidden = false;
+    adminLoginFeedback.className = "form-feedback error";
+    adminLoginFeedback.textContent = error.message;
+  }
+});
+
+adminLogoutButton.addEventListener("click", async () => {
+  await fetch("/api/admin/logout", { method: "POST" });
+  window.location.reload();
+});
+
+initializeAdmin().catch((error) => {
+  adminLoginFeedback.hidden = false;
+  adminLoginFeedback.className = "form-feedback error";
+  adminLoginFeedback.textContent = error.message;
 });

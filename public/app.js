@@ -186,19 +186,20 @@ const orderSubmitButton = orderForm.querySelector('button[type="submit"]');
 
 function localizeApiError(message, fallbackKey) {
   const errorMap = {
-    "请输入姓名": currentLocale === "en" ? "Please enter your name." : "请填写姓名",
-    "请填写有效手机号": currentLocale === "en" ? "Please enter a valid phone number." : "请填写有效手机号",
-    "预约数量必须大于 0": currentLocale === "en" ? "Reservation quantity must be greater than 0." : "预约数量必须大于 0",
-    "库存不足，请减少数量后再试": currentLocale === "en" ? "Not enough stock for this quantity." : "库存不足，请减少数量后再试",
-    "商品不存在或已下架": currentLocale === "en" ? "This item is unavailable." : "商品不存在或已下架",
-    "未找到这笔预约": currentLocale === "en" ? "This reservation could not be found." : "未找到这笔预约",
-    "手机号与预约信息不一致": currentLocale === "en" ? "That phone number does not match the reservation." : "手机号与预约信息不一致",
-    "请填写下单时使用的手机号": currentLocale === "en" ? "Please enter the phone number used for this reservation." : "请填写下单时使用的手机号",
-    "未找到这个面包": currentLocale === "en" ? "This item could not be found." : "未找到这个面包",
-    "请输入面包名称": currentLocale === "en" ? "Please enter a product name." : "请输入面包名称",
-    "请上传或填写面包图片": currentLocale === "en" ? "Please upload or add an image URL." : "请上传或填写面包图片",
-    "请输入正确价格": currentLocale === "en" ? "Please enter a valid price." : "请输入正确价格",
-    "请输入正确库存": currentLocale === "en" ? "Please enter a valid stock quantity." : "请输入正确库存",
+    "Please enter your name.": "请填写姓名",
+    "Please enter a valid phone number.": "请填写有效手机号",
+    "Reservation quantity must be greater than 0.": "预约数量必须大于 0",
+    "Not enough stock for this quantity.": "库存不足，请减少数量后再试",
+    "This product is unavailable.": "商品不存在或已下架",
+    "Reservation not found.": "未找到这笔预约",
+    "The phone number does not match this reservation.": "手机号与预约信息不一致",
+    "Please enter the phone number used for the reservation.": "请填写下单时使用的手机号",
+    "Product not found.": "未找到这个面包",
+    "Please enter a product name.": "请输入面包名称",
+    "Please upload an image or provide an image URL.": "请上传或填写面包图片",
+    "Invalid image format. Use JPG, PNG, WebP, or a valid image URL.": "图片格式无效，请上传 JPG、PNG、WebP，或填写有效图片链接",
+    "Please enter a valid price.": "请输入正确价格",
+    "Please enter a valid stock quantity.": "请输入正确库存",
   };
   return errorMap[message] || message || t(fallbackKey);
 }

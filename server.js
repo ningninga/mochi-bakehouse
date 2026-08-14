@@ -1,6 +1,7 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const { URL, pathToFileURL } = require("url");
 
 loadEnvFile(path.join(__dirname, ".env"));
@@ -18,6 +19,8 @@ const ordersFile = path.join(dataDir, "orders.json");
 const costingFile = path.join(dataDir, "costing.json");
 const mongoBundlePath = process.env.MONGODB_BUNDLE_PATH || path.join(vendorDir, "mongodb.bundle.mjs");
 const mongoDbName = process.env.MONGODB_DB || "mochi_bakehouse";
+const adminPassword = process.env.ADMIN_PASSWORD || "mochi-admin-2026";
+const adminSessionCookie = "mochi_admin_session";
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -152,6 +155,29 @@ function sendText(res, statusCode, text) {
   res.end(text);
 }
 
+function getAdminSessionToken() {
+  return crypto.createHmac("sha256", adminPassword).update("mochi-admin").digest("hex");
+}
+
+function hasAdminSession(req) {
+  const cookies = String(req.headers.cookie || "")
+    .split(";")
+    .map((item) => item.trim().split("="))
+    .filter(([key]) => key)
+    .reduce((result, [key, ...value]) => ({ ...result, [key]: value.join("=") }), {});
+  const supplied = cookies[adminSessionCookie] || "";
+  const expected = getAdminSessionToken();
+  return supplied.length === expected.length && crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(expected));
+}
+
+function requireAdmin(req, res) {
+  if (hasAdminSession(req)) {
+    return true;
+  }
+  sendJson(res, 401, { error: "Admin authentication required." });
+  return false;
+}
+
 function parseBody(req) {
   return new Promise((resolve, reject) => {
     let raw = "";
@@ -219,7 +245,7 @@ function sanitizeProductPayload(payload, { partial = false } = {}) {
 
   if (!partial || payload.name !== undefined) {
     if (typeof payload.name !== "string" || !payload.name.trim()) {
-      throw new Error("请输入面包名称");
+      throw new Error("Please enter a product name.");
     }
     product.name = payload.name.trim();
   }
@@ -237,7 +263,7 @@ function sanitizeProductPayload(payload, { partial = false } = {}) {
   }
 
   if (!partial || payload.category !== undefined) {
-    product.category = String(payload.category || "当日限定").trim() || "当日限定";
+    product.category = String(payload.category || "Limited Drop").trim() || "Limited Drop";
   }
 
   if (!partial || payload.categoryEn !== undefined) {
@@ -255,7 +281,7 @@ function sanitizeProductPayload(payload, { partial = false } = {}) {
   if (!partial || payload.image !== undefined) {
     const image = String(payload.image || "").trim();
     if (!image) {
-      throw new Error("请上传或填写面包图片");
+      throw new Error("Please upload an image or provide an image URL.");
     }
     const isSupportedDataUrl = /^data:image\/(?:jpeg|png|webp);base64,[a-z0-9+/=]+$/i.test(image);
     let isWebUrl = false;
@@ -266,7 +292,7 @@ function sanitizeProductPayload(payload, { partial = false } = {}) {
       isWebUrl = false;
     }
     if (!isSupportedDataUrl && !isWebUrl) {
-      throw new Error("图片格式无效，请上传 JPG、PNG、WebP，或填写有效图片链接");
+      throw new Error("Invalid image format. Use JPG, PNG, WebP, or a valid image URL.");
     }
     product.image = image;
   }
@@ -284,7 +310,7 @@ function sanitizeProductPayload(payload, { partial = false } = {}) {
   if (!partial || payload.price !== undefined) {
     const price = Number(payload.price);
     if (!Number.isFinite(price) || price < 0) {
-      throw new Error("请输入正确价格");
+      throw new Error("Please enter a valid price.");
     }
     product.price = Number(price.toFixed(2));
   }
@@ -292,7 +318,7 @@ function sanitizeProductPayload(payload, { partial = false } = {}) {
   if (!partial || payload.stock !== undefined) {
     const stock = Number(payload.stock);
     if (!Number.isInteger(stock) || stock < 0) {
-      throw new Error("请输入正确库存");
+      throw new Error("Please enter a valid stock quantity.");
     }
     product.stock = stock;
   }
@@ -384,7 +410,7 @@ function createJsonStorage() {
       const productMap = new Map(products.map((item) => [item.id, item]));
       return orders.map((order) => ({
         ...order,
-        productName: productMap.get(order.productId)?.name || "已删除商品",
+        productName: productMap.get(order.productId)?.name || "Deleted product",
       }));
     },
     async getCostingData() {
@@ -399,12 +425,12 @@ function createJsonStorage() {
       const products = readJson(productsFile);
       const productIndex = products.findIndex((item) => item.id === orderInput.productId && item.active);
       if (productIndex === -1) {
-        throw new Error("商品不存在或已下架");
+        throw new Error("This product is unavailable.");
       }
 
       const product = products[productIndex];
       if (product.stock < orderInput.quantity) {
-        throw new Error("库存不足，请减少数量后再试");
+        throw new Error("Not enough stock for this quantity.");
       }
 
       products[productIndex] = {
@@ -432,12 +458,12 @@ function createJsonStorage() {
       const orders = readJson(ordersFile);
       const orderIndex = orders.findIndex((item) => item.id === orderId);
       if (orderIndex === -1) {
-        throw new Error("未找到这笔预约");
+        throw new Error("Reservation not found.");
       }
 
       const order = orders[orderIndex];
       if (order.customerPhone !== customerPhone) {
-        throw new Error("手机号与预约信息不一致");
+        throw new Error("The phone number does not match this reservation.");
       }
 
       const products = readJson(productsFile);
@@ -525,7 +551,7 @@ async function createMongoStorage() {
       const productMap = new Map(products.map((item) => [item.id, item]));
       return orders.map((order) => ({
         ...sanitizeDocument(order),
-        productName: productMap.get(order.productId)?.name || "已删除商品",
+        productName: productMap.get(order.productId)?.name || "Deleted product",
       }));
     },
     async getCostingData() {
@@ -543,10 +569,10 @@ async function createMongoStorage() {
     async createOrder(orderInput) {
       const product = await this.products.findOne({ id: orderInput.productId, active: true });
       if (!product) {
-        throw new Error("商品不存在或已下架");
+        throw new Error("This product is unavailable.");
       }
       if (product.stock < orderInput.quantity) {
-        throw new Error("库存不足，请减少数量后再试");
+        throw new Error("Not enough stock for this quantity.");
       }
 
       const updatedProduct = await this.products.findOneAndUpdate(
@@ -556,7 +582,7 @@ async function createMongoStorage() {
       );
 
       if (!updatedProduct) {
-        throw new Error("库存不足，请减少数量后再试");
+        throw new Error("Not enough stock for this quantity.");
       }
 
       const newOrder = {
@@ -575,10 +601,10 @@ async function createMongoStorage() {
     async cancelOrder(orderId, customerPhone) {
       const order = await this.orders.findOne({ id: orderId });
       if (!order) {
-        throw new Error("未找到这笔预约");
+        throw new Error("Reservation not found.");
       }
       if (order.customerPhone !== customerPhone) {
-        throw new Error("手机号与预约信息不一致");
+        throw new Error("The phone number does not match this reservation.");
       }
 
       await this.products.updateOne(
@@ -624,13 +650,13 @@ function validateOrderPayload(payload) {
   const requestedQty = Number(payload.quantity);
 
   if (!cleanName) {
-    throw new Error("请填写姓名");
+    throw new Error("Please enter your name.");
   }
   if (!/^[0-9+\-\s]{6,20}$/.test(cleanPhone)) {
-    throw new Error("请填写有效手机号");
+    throw new Error("Please enter a valid phone number.");
   }
   if (!Number.isInteger(requestedQty) || requestedQty <= 0) {
-    throw new Error("预约数量必须大于 0");
+    throw new Error("Reservation quantity must be greater than 0.");
   }
 
   return {
@@ -645,7 +671,7 @@ function validateOrderPayload(payload) {
 function validateCancelPhone(payload) {
   const customerPhone = String(payload.customerPhone || "").trim();
   if (!/^[0-9+\-\s]{6,20}$/.test(customerPhone)) {
-    throw new Error("请填写下单时使用的手机号");
+    throw new Error("Please enter the phone number used for the reservation.");
   }
   return customerPhone;
 }
@@ -655,6 +681,39 @@ function createRequestHandler(storage) {
     const url = new URL(req.url, `http://${req.headers.host}`);
 
     try {
+      if (url.pathname === "/api/admin/session") {
+        sendJson(res, 200, { authenticated: hasAdminSession(req) });
+        return;
+      }
+
+      if (url.pathname === "/api/admin/login") {
+        if (req.method !== "POST") {
+          sendText(res, 405, "Method Not Allowed");
+          return;
+        }
+        const payload = await parseBody(req);
+        if (String(payload.password || "") !== adminPassword) {
+          sendJson(res, 401, { error: "Incorrect admin password." });
+          return;
+        }
+        res.writeHead(200, {
+          "Content-Type": "application/json; charset=utf-8",
+          "Set-Cookie": `${adminSessionCookie}=${getAdminSessionToken()}; HttpOnly; SameSite=Lax; Path=/; Max-Age=28800`,
+        });
+        res.end(JSON.stringify({ authenticated: true }));
+        return;
+      }
+
+      if (url.pathname === "/api/admin/logout") {
+        if (!requireAdmin(req, res)) return;
+        res.writeHead(200, {
+          "Content-Type": "application/json; charset=utf-8",
+          "Set-Cookie": `${adminSessionCookie}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0`,
+        });
+        res.end(JSON.stringify({ authenticated: false }));
+        return;
+      }
+
       if (url.pathname === "/api/products") {
         if (req.method === "GET") {
           sendJson(res, 200, await storage.getProducts());
@@ -662,6 +721,7 @@ function createRequestHandler(storage) {
         }
 
         if (req.method === "POST") {
+          if (!requireAdmin(req, res)) return;
           const payload = await parseBody(req);
           const clean = sanitizeProductPayload(payload);
           const created = await storage.createProduct(clean);
@@ -677,11 +737,12 @@ function createRequestHandler(storage) {
         const productId = url.pathname.split("/").pop();
 
         if (req.method === "PATCH") {
+          if (!requireAdmin(req, res)) return;
           const payload = await parseBody(req);
           const clean = sanitizeProductPayload(payload, { partial: true });
           const updated = await storage.updateProduct(productId, clean);
           if (!updated) {
-            sendJson(res, 404, { error: "未找到这个面包" });
+            sendJson(res, 404, { error: "Product not found." });
             return;
           }
           sendJson(res, 200, updated);
@@ -689,9 +750,10 @@ function createRequestHandler(storage) {
         }
 
         if (req.method === "DELETE") {
+          if (!requireAdmin(req, res)) return;
           const removed = await storage.deleteProduct(productId);
           if (!removed) {
-            sendJson(res, 404, { error: "未找到这个面包" });
+            sendJson(res, 404, { error: "Product not found." });
             return;
           }
           sendJson(res, 200, removed);
@@ -704,6 +766,7 @@ function createRequestHandler(storage) {
 
       if (url.pathname === "/api/orders") {
         if (req.method === "GET") {
+          if (!requireAdmin(req, res)) return;
           sendJson(res, 200, await storage.listOrdersWithProductNames());
           return;
         }
@@ -745,11 +808,13 @@ function createRequestHandler(storage) {
 
       if (url.pathname === "/api/costing-data") {
         if (req.method === "GET") {
+          if (!requireAdmin(req, res)) return;
           sendJson(res, 200, await storage.getCostingData());
           return;
         }
 
         if (req.method === "PUT") {
+          if (!requireAdmin(req, res)) return;
           const payload = await parseBody(req);
           const costingData = {
             ingredients: Array.isArray(payload.ingredients) ? payload.ingredients : [],
@@ -764,6 +829,7 @@ function createRequestHandler(storage) {
       }
 
       if (url.pathname === "/api/translate-product-field") {
+        if (!requireAdmin(req, res)) return;
         if (req.method !== "POST") {
           sendText(res, 405, "Method Not Allowed");
           return;
@@ -783,12 +849,12 @@ function createRequestHandler(storage) {
       serveStaticFile(url.pathname, res);
     } catch (error) {
       const statusCode =
-        error.message.includes("未找到") ||
-        error.message.includes("不存在") ||
-        error.message.includes("已下架")
+        error.message.includes("not found") ||
+        error.message.includes("unavailable") ||
+        error.message.includes("Deleted")
           ? 404
           : 400;
-      sendJson(res, statusCode, { error: error.message || "服务器错误" });
+      sendJson(res, statusCode, { error: error.message || "Server error." });
     }
   };
 }
