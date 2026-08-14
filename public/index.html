@@ -23,9 +23,17 @@
             <h1>Mochi Bakehouse</h1>
           </div>
         </div>
-        <div class="language-toggle" role="group" aria-label="Language switch">
-          <button class="language-button" type="button" data-locale-button="zh">中文</button>
-          <button class="language-button is-active" type="button" data-locale-button="en">EN</button>
+        <div class="topbar-actions">
+          <nav class="site-nav" aria-label="Main navigation">
+            <a href="#about-bakehouse" data-i18n="navAbout">About</a>
+            <a href="#how-it-works" data-i18n="navHow">How it works</a>
+            <a href="#products" data-i18n="navBakes">Bakes</a>
+            <a href="#cancel-reservation" data-i18n="navCancel">Cancel</a>
+          </nav>
+          <div class="language-toggle" role="group" aria-label="Language switch">
+            <button class="language-button" type="button" data-locale-button="zh">中文</button>
+            <button class="language-button is-active" type="button" data-locale-button="en">EN</button>
+          </div>
         </div>
       </nav>
 
@@ -43,7 +51,6 @@
         </div>
 
         <aside class="hero-highlight">
-          <p class="eyebrow" data-i18n="highlightTitle">预订提醒</p>
           <ul class="highlight-list">
             <li data-i18n="highlightItem1">不是每天开单，会按排期开放预约</li>
             <li data-i18n="highlightItem2">每一轮预约数量有限，约满后就会显示不可预约</li>
@@ -55,7 +62,7 @@
     </header>
 
     <main>
-      <section class="section about-strip">
+      <section class="section about-strip" id="about-bakehouse">
         <div class="about-card">
           <div class="about-copy">
             <p class="eyebrow" data-i18n="aboutEyebrow">关于这家小店</p>
@@ -97,7 +104,7 @@
         </div>
       </section>
 
-      <section class="section products-section">
+      <section class="section products-section" id="products">
         <div class="section-head">
           <div>
             <p class="eyebrow" data-i18n="productsEyebrow">可预约面包</p>
@@ -110,7 +117,7 @@
         <div id="product-grid" class="product-grid"></div>
       </section>
 
-      <section class="section cancel-section">
+      <section class="section cancel-section" id="cancel-reservation">
         <div class="section-head">
           <div>
             <p class="eyebrow" data-i18n="cancelEyebrow">取消预约</p>

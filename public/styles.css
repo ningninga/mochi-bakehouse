@@ -85,6 +85,35 @@ textarea {
   margin-bottom: 28px;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.site-nav a {
+  padding: 9px 10px;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  text-decoration: none;
+  transition: color 180ms ease, background 180ms ease;
+}
+
+.site-nav a:hover {
+  color: var(--accent-strong);
+  background: rgba(255, 251, 246, 0.72);
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -267,7 +296,6 @@ textarea {
 .hero-highlight {
   border-radius: 32px;
   padding: 26px;
-  align-self: end;
   background: rgba(255, 247, 231, 0.9);
   border-style: dashed;
   animation: rise-in 650ms ease both;
@@ -761,6 +789,22 @@ textarea:focus {
   .topbar {
     gap: 16px;
     margin-bottom: 20px;
+  }
+
+  .topbar-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .site-nav {
+    justify-content: flex-start;
+    gap: 0;
+  }
+
+  .site-nav a {
+    padding: 8px 7px;
+    font-size: 0.76rem;
   }
 
   .brand {
