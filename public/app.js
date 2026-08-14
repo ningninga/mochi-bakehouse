@@ -146,7 +146,8 @@ const translations = {
 
 let products = [];
 let selectedProduct = null;
-let currentLocale = localStorage.getItem("mochi-locale") || "zh";
+// English is the default for first-time visitors; keep any saved preference.
+let currentLocale = localStorage.getItem("mochi-locale") || "en";
 
 function t(key) {
   return translations[currentLocale][key];
