@@ -191,6 +191,14 @@ function localizeApiError(message, fallbackKey) {
     "预约数量必须大于 0": currentLocale === "en" ? "Reservation quantity must be greater than 0." : "预约数量必须大于 0",
     "库存不足，请减少数量后再试": currentLocale === "en" ? "Not enough stock for this quantity." : "库存不足，请减少数量后再试",
     "商品不存在或已下架": currentLocale === "en" ? "This item is unavailable." : "商品不存在或已下架",
+    "未找到这笔预约": currentLocale === "en" ? "This reservation could not be found." : "未找到这笔预约",
+    "手机号与预约信息不一致": currentLocale === "en" ? "That phone number does not match the reservation." : "手机号与预约信息不一致",
+    "请填写下单时使用的手机号": currentLocale === "en" ? "Please enter the phone number used for this reservation." : "请填写下单时使用的手机号",
+    "未找到这个面包": currentLocale === "en" ? "This item could not be found." : "未找到这个面包",
+    "请输入面包名称": currentLocale === "en" ? "Please enter a product name." : "请输入面包名称",
+    "请上传或填写面包图片": currentLocale === "en" ? "Please upload or add an image URL." : "请上传或填写面包图片",
+    "请输入正确价格": currentLocale === "en" ? "Please enter a valid price." : "请输入正确价格",
+    "请输入正确库存": currentLocale === "en" ? "Please enter a valid stock quantity." : "请输入正确库存",
   };
   return errorMap[message] || message || t(fallbackKey);
 }
@@ -490,7 +498,7 @@ cancelForm.addEventListener("submit", async (event) => {
     cancelForm.reset();
     await loadProducts();
   } catch (error) {
-    showCancelFeedback(error.message, "error");
+    showCancelFeedback(localizeApiError(error.message, "cancelFailed"), "error");
   }
 });
 
