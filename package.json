@@ -1,0 +1,13 @@
+{
+  "name": "mochi-bakehouse",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mochi Bakehouse preorder site",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "mongodb": "^7.5.0"
+  }
+}

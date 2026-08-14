@@ -1,0 +1,77 @@
+[
+  {
+    "id": "bread-sourdough-milk",
+    "name": "海盐黄油酸种",
+    "nameEn": "Sea Salt Butter Sourdough",
+    "description": "外脆内软，带一点发酵香气，适合早餐或做三明治。",
+    "descriptionEn": "Crusty outside, soft inside, with a gentle fermented aroma. Great for breakfast or sandwiches.",
+    "allergens": [
+      "小麦",
+      "奶制品"
+    ],
+    "allergensEn": [
+      "Wheat",
+      "Dairy"
+    ],
+    "price": 36,
+    "stock": 7,
+    "image": "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=1200&q=80",
+    "category": "欧包",
+    "categoryEn": "Sourdough",
+    "pickupWindow": "明天下午 4:00 - 7:00",
+    "pickupWindowEn": "Tomorrow, 4:00 PM - 7:00 PM",
+    "active": true,
+    "createdAt": "2026-08-14T11:26:58.973Z",
+    "updatedAt": "2026-08-14T15:26:39.583Z"
+  },
+  {
+    "id": "bread-brioche-choco",
+    "name": "可可布里欧修",
+    "nameEn": "Cocoa Brioche",
+    "description": "松软奶香中带可可层次，适合喜欢偏甜口感的客人。",
+    "descriptionEn": "Soft and buttery with cocoa notes, ideal for anyone who enjoys a slightly sweeter bake.",
+    "allergens": [
+      "小麦",
+      "鸡蛋",
+      "奶制品"
+    ],
+    "allergensEn": [
+      "Wheat",
+      "Egg",
+      "Dairy"
+    ],
+    "price": 28,
+    "stock": 12,
+    "image": "https://images.unsplash.com/photo-1517433670267-08bbd4be890f?auto=format&fit=crop&w=1200&q=80",
+    "category": "甜面包",
+    "categoryEn": "Sweet Bread",
+    "pickupWindow": "周六上午 10:00 - 12:00",
+    "pickupWindowEn": "Saturday, 10:00 AM - 12:00 PM",
+    "active": true,
+    "createdAt": "2026-08-14T11:26:58.981Z"
+  },
+  {
+    "id": "bread-bagel-sesame",
+    "name": "芝麻贝果",
+    "nameEn": "Sesame Bagel",
+    "description": "嚼劲足，冷冻也方便，回烤后依旧香。",
+    "descriptionEn": "Chewy and freezer-friendly, and still lovely after reheating.",
+    "allergens": [
+      "小麦",
+      "芝麻"
+    ],
+    "allergensEn": [
+      "Wheat",
+      "Sesame"
+    ],
+    "price": 18,
+    "stock": 16,
+    "image": "https://images.unsplash.com/photo-1483695028939-5bb13f8648b0?auto=format&fit=crop&w=1200&q=80",
+    "category": "贝果",
+    "categoryEn": "Bagel",
+    "pickupWindow": "周六下午 2:00 - 6:00",
+    "pickupWindowEn": "Saturday, 2:00 PM - 6:00 PM",
+    "active": true,
+    "createdAt": "2026-08-14T11:26:58.981Z"
+  }
+]

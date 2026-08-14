@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mochi Bakehouse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="storefront-page">
+    <div class="grain"></div>
+    <header class="hero">
+      <nav class="topbar">
+        <div class="brand">
+          <span class="brand-mark">B</span>
+          <div>
+            <p class="eyebrow" data-i18n="brandEyebrow">限量预约</p>
+            <h1>Mochi Bakehouse</h1>
+          </div>
+        </div>
+        <div class="language-toggle" role="group" aria-label="Language switch">
+          <button class="language-button is-active" type="button" data-locale-button="zh">中文</button>
+          <button class="language-button" type="button" data-locale-button="en">EN</button>
+        </div>
+      </nav>
+
+      <section class="hero-panel">
+        <div class="hero-copy">
+          <p class="eyebrow" data-i18n="heroEyebrow">不定期开单 · 数量有限 · 约满即止</p>
+          <h2 data-i18n="heroTitle">喜欢哪一款，先预约，本次开单名额有限</h2>
+          <p class="hero-text" data-i18n="heroText">
+            这里是不定期开单的预约页面，不是每天都有现货。你可以先看看口味、价格、过敏原和本次可预约数量，选好后留下姓名和手机号预约就可以。
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="#product-grid" data-i18n="heroPrimaryCta">查看可预约面包</a>
+            <a class="button secondary" href="#how-it-works" data-i18n="heroSecondaryCta">预约说明</a>
+          </div>
+        </div>
+
+        <aside class="hero-highlight">
+          <p class="eyebrow" data-i18n="highlightTitle">预订提醒</p>
+          <ul class="highlight-list">
+            <li data-i18n="highlightItem1">不是每天开单，会按排期开放预约</li>
+            <li data-i18n="highlightItem2">每一轮预约数量有限，约满后就会显示不可预约</li>
+            <li data-i18n="highlightItem3">提交预约后，我会再和你确认制作与取货安排</li>
+            <li data-i18n="highlightItem4">取货地点：Dublin 2</li>
+          </ul>
+        </aside>
+      </section>
+    </header>
+
+    <main>
+      <section class="section intro-strip" id="how-it-works">
+        <div>
+          <p class="eyebrow" data-i18n="introEyebrow">预订方式</p>
+          <h3 data-i18n="introTitle">看看这次开放预约的面包，选好后直接留单</h3>
+        </div>
+        <div class="intro-cards">
+          <article>
+            <span>01</span>
+            <h4 data-i18n="introStep1Title">看看本次开单有什么</h4>
+            <p data-i18n="introStep1Text">照片、口味、过敏原、价格和可预约数量都会写清楚。</p>
+          </article>
+          <article>
+            <span>02</span>
+            <h4 data-i18n="introStep2Title">选数量并留下联系方式</h4>
+            <p data-i18n="introStep2Text">不用注册，填写姓名和手机号就能完成预约。</p>
+          </article>
+          <article>
+            <span>03</span>
+            <h4 data-i18n="introStep3Title">等我和你确认取货</h4>
+            <p data-i18n="introStep3Text">提交后我会尽快联系你，确认时间和取货细节。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section products-section">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow" data-i18n="productsEyebrow">可预约面包</p>
+            <h3 data-i18n="productsTitle">本次开放预约</h3>
+          </div>
+          <p class="section-note" data-i18n="productsNote">每次开单数量都有限，约满即止。</p>
+        </div>
+
+        <div id="status-banner" class="status-banner" hidden></div>
+        <div id="product-grid" class="product-grid"></div>
+      </section>
+
+      <section class="section cancel-section">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow" data-i18n="cancelEyebrow">取消预约</p>
+            <h3 data-i18n="cancelTitle">如果临时来不了，可以自己取消</h3>
+          </div>
+          <p class="section-note" data-i18n="cancelNote">输入预约编号和下单手机号后，系统会自动释放数量。</p>
+        </div>
+
+        <form id="cancel-form" class="cancel-form">
+          <label data-i18n-label="cancelOrderIdLabel">
+            预约编号
+            <input
+              type="text"
+              name="orderId"
+              placeholder="例如 order-1786720683341"
+              data-i18n-placeholder="cancelOrderIdPlaceholder"
+              required
+            />
+          </label>
+          <label data-i18n-label="cancelPhoneLabel">
+            下单手机号
+            <input
+              type="tel"
+              name="customerPhone"
+              placeholder="请输入下单时填写的手机号"
+              data-i18n-placeholder="cancelPhonePlaceholder"
+              required
+            />
+          </label>
+          <button class="button secondary" type="submit" data-i18n="cancelButton">取消这笔预约</button>
+        </form>
+        <p id="cancel-feedback" class="form-feedback" hidden></p>
+      </section>
+    </main>
+
+    <dialog id="order-dialog" class="order-dialog">
+      <form id="order-form" class="order-form" method="dialog">
+        <div class="dialog-head">
+          <div>
+            <p class="eyebrow" data-i18n="orderEyebrow">预约面包</p>
+            <h3 id="order-product-name">面包名称</h3>
+          </div>
+          <button class="icon-button" type="button" id="close-dialog-button" aria-label="关闭" data-i18n-aria-label="closeDialogAria">×</button>
+        </div>
+
+        <div class="dialog-grid">
+          <label data-i18n-label="orderNameLabel">
+            姓名
+            <input type="text" name="customerName" placeholder="请输入姓名" data-i18n-placeholder="orderNamePlaceholder" required />
+          </label>
+          <label data-i18n-label="orderPhoneLabel">
+            手机号
+            <input type="tel" name="customerPhone" placeholder="请输入手机号" data-i18n-placeholder="orderPhonePlaceholder" required />
+          </label>
+          <label data-i18n-label="orderQuantityLabel">
+            预约数量
+            <input type="number" name="quantity" min="1" value="1" required />
+          </label>
+          <label data-i18n-label="orderNoteLabel">
+            备注
+            <textarea name="note" rows="3" placeholder="例如少糖、晚一点来取" data-i18n-placeholder="orderNotePlaceholder"></textarea>
+          </label>
+        </div>
+
+        <p id="order-helper" class="order-helper"></p>
+        <p id="order-success-code" class="order-code" hidden></p>
+        <p id="order-feedback" class="form-feedback" hidden></p>
+
+        <button class="button primary full" type="submit" data-i18n="orderSubmit">提交预约</button>
+      </form>
+    </dialog>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>
