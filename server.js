@@ -15,6 +15,7 @@ const dataDir = path.join(__dirname, "work", "data");
 const vendorDir = path.join(__dirname, "work", "vendor");
 const productsFile = path.join(dataDir, "products.json");
 const ordersFile = path.join(dataDir, "orders.json");
+const costingFile = path.join(dataDir, "costing.json");
 const mongoBundlePath = process.env.MONGODB_BUNDLE_PATH || path.join(vendorDir, "mongodb.bundle.mjs");
 const mongoDbName = process.env.MONGODB_DB || "mochi_bakehouse";
 
@@ -172,6 +173,47 @@ function parseBody(req) {
   });
 }
 
+async function translateProductField(text, field) {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("AI translation is not configured. Add OPENAI_API_KEY in Render.");
+  }
+
+  const fieldInstructions = {
+    name: "Translate this bakery product name into natural, concise English.",
+    category: "Translate this bakery category into natural English.",
+    description: "Translate this bakery product description into warm, clear English.",
+    allergens: "Translate these allergen names into English. Keep them comma-separated.",
+    pickupWindow: "Translate this pickup time window into natural English. Keep the time and meaning unchanged.",
+  };
+  if (!fieldInstructions[field]) {
+    throw new Error("Unsupported translation field");
+  }
+
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "gpt-5",
+      input: [
+        {
+          role: "system",
+          content: `${fieldInstructions[field]} Return only the translated text, with no explanation.`,
+        },
+        { role: "user", content: text },
+      ],
+    }),
+  });
+
+  const result = await response.json();
+  if (!response.ok) {
+    throw new Error(result.error?.message || "AI translation failed");
+  }
+  return String(result.output_text || "").trim();
+}
+
 function sanitizeProductPayload(payload, { partial = false } = {}) {
   const product = {};
 
@@ -290,6 +332,9 @@ function createJsonStorage() {
       if (!fs.existsSync(ordersFile)) {
         writeJson(ordersFile, []);
       }
+      if (!fs.existsSync(costingFile)) {
+        writeJson(costingFile, { ingredients: [], recipes: [] });
+      }
     },
     async getProducts() {
       return readJson(productsFile);
@@ -330,6 +375,13 @@ function createJsonStorage() {
         ...order,
         productName: productMap.get(order.productId)?.name || "已删除商品",
       }));
+    },
+    async getCostingData() {
+      return readJson(costingFile);
+    },
+    async saveCostingData(data) {
+      writeJson(costingFile, data);
+      return data;
     },
     async createOrder(orderInput) {
       const orders = readJson(ordersFile);
@@ -414,8 +466,10 @@ async function createMongoStorage() {
       this.db = client.db(mongoDbName);
       this.products = this.db.collection("products");
       this.orders = this.db.collection("orders");
+      this.costing = this.db.collection("costing");
       await this.products.createIndex({ id: 1 }, { unique: true });
       await this.orders.createIndex({ id: 1 }, { unique: true });
+      await this.costing.createIndex({ id: 1 }, { unique: true });
 
       const productCount = await this.products.countDocuments();
       if (productCount === 0) {
@@ -462,6 +516,18 @@ async function createMongoStorage() {
         ...sanitizeDocument(order),
         productName: productMap.get(order.productId)?.name || "已删除商品",
       }));
+    },
+    async getCostingData() {
+      const doc = await this.costing.findOne({ id: "main" });
+      return doc ? sanitizeDocument(doc) : { ingredients: [], recipes: [] };
+    },
+    async saveCostingData(data) {
+      await this.costing.replaceOne(
+        { id: "main" },
+        { id: "main", ...data, updatedAt: new Date().toISOString() },
+        { upsert: true }
+      );
+      return data;
     },
     async createOrder(orderInput) {
       const product = await this.products.findOne({ id: orderInput.productId, active: true });
@@ -663,6 +729,43 @@ function createRequestHandler(storage) {
           mongoBundleReady: fs.existsSync(mongoBundlePath),
           databaseName: mongoDbName,
         });
+        return;
+      }
+
+      if (url.pathname === "/api/costing-data") {
+        if (req.method === "GET") {
+          sendJson(res, 200, await storage.getCostingData());
+          return;
+        }
+
+        if (req.method === "PUT") {
+          const payload = await parseBody(req);
+          const costingData = {
+            ingredients: Array.isArray(payload.ingredients) ? payload.ingredients : [],
+            recipes: Array.isArray(payload.recipes) ? payload.recipes : [],
+          };
+          sendJson(res, 200, await storage.saveCostingData(costingData));
+          return;
+        }
+
+        sendText(res, 405, "Method Not Allowed");
+        return;
+      }
+
+      if (url.pathname === "/api/translate-product-field") {
+        if (req.method !== "POST") {
+          sendText(res, 405, "Method Not Allowed");
+          return;
+        }
+        const payload = await parseBody(req);
+        const text = String(payload.text || "").trim();
+        const field = String(payload.field || "").trim();
+        if (!text) {
+          sendJson(res, 400, { error: "Please enter Chinese text first." });
+          return;
+        }
+        const translated = await translateProductField(text, field);
+        sendJson(res, 200, { translated });
         return;
       }
 

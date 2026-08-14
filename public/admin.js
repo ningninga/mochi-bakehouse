@@ -2,8 +2,22 @@ const productForm = document.querySelector("#product-form");
 const productFeedback = document.querySelector("#product-feedback");
 const adminProducts = document.querySelector("#admin-products");
 const ordersList = document.querySelector("#orders-list");
-const ingredientRows = document.querySelector("#ingredient-rows");
-const addIngredientButton = document.querySelector("#add-ingredient");
+const priceBookRows = document.querySelector("#price-book-rows");
+const recipeRows = document.querySelector("#recipe-rows");
+const addPriceItemButton = document.querySelector("#add-price-item");
+const addRecipeIngredientButton = document.querySelector("#add-recipe-ingredient");
+const productNameInput = document.querySelector("#cost-product-name");
+const savedRecipeSelect = document.querySelector("#saved-recipe-select");
+const newRecipeButton = document.querySelector("#new-recipe");
+const saveRecipeButton = document.querySelector("#save-recipe");
+const recipeSaveFeedback = document.querySelector("#recipe-save-feedback");
+const productEditDialog = document.querySelector("#product-edit-dialog");
+const productEditForm = document.querySelector("#product-edit-form");
+const productEditTitle = document.querySelector("#product-edit-title");
+const productEditFeedback = document.querySelector("#product-edit-feedback");
+const translationFeedback = document.querySelector("#translation-feedback");
+let editingProductId = "";
+const translationTimers = new Map();
 const costingInputs = {
   yield: document.querySelector("#cost-yield"),
   salePrice: document.querySelector("#cost-sale-price"),
@@ -24,77 +38,191 @@ const costingResults = {
 let productState = [];
 let uploadedImageData = "";
 const costingStorageKey = "mochi-costing-draft";
-let ingredients = [];
+const priceBookStorageKey = "mochi-price-book";
+const productRecipesStorageKey = "mochi-product-recipes";
+let priceBook = [];
+let recipeIngredients = [];
+let productRecipes = [];
+let currentRecipeId = "";
+let costingSaveTimer;
 
 function money(value) {
   return `€${value.toFixed(2)}`;
 }
 
-function emptyIngredient() {
-  return { name: "", amount: 0, packSize: 1000, packPrice: 0 };
+function emptyPriceItem() {
+  return { name: "", packSize: 1000, packPrice: 0 };
+}
+
+function emptyRecipeIngredient() {
+  return { materialId: "", amount: 0 };
 }
 
 function loadCostingDraft() {
   try {
-    const saved = JSON.parse(localStorage.getItem(costingStorageKey) || "null");
-    if (saved?.ingredients?.length) {
-      ingredients = saved.ingredients;
+    const savedCosting = JSON.parse(localStorage.getItem(costingStorageKey) || "null");
+    const savedPriceBook = JSON.parse(localStorage.getItem(priceBookStorageKey) || "null");
+    const savedProductRecipes = JSON.parse(localStorage.getItem(productRecipesStorageKey) || "null");
+    if (savedPriceBook?.length) {
+      priceBook = savedPriceBook;
     } else {
-      ingredients = [emptyIngredient()];
+      priceBook = [emptyPriceItem()];
     }
+    if (savedCosting?.recipeIngredients?.length) {
+      recipeIngredients = savedCosting.recipeIngredients;
+    } else {
+      recipeIngredients = [emptyRecipeIngredient()];
+    }
+    productRecipes = Array.isArray(savedProductRecipes) ? savedProductRecipes : [];
     Object.entries(costingInputs).forEach(([key, input]) => {
-      if (saved?.[key] !== undefined) {
-        input.value = saved[key];
+      if (savedCosting?.[key] !== undefined) {
+        input.value = savedCosting[key];
       }
     });
   } catch {
-    ingredients = [emptyIngredient()];
+    priceBook = [emptyPriceItem()];
+    recipeIngredients = [emptyRecipeIngredient()];
+    productRecipes = [];
   }
 }
 
 function saveCostingDraft() {
   const draft = {
-    ingredients,
+    recipeIngredients,
     ...Object.fromEntries(Object.entries(costingInputs).map(([key, input]) => [key, input.value])),
   };
   localStorage.setItem(costingStorageKey, JSON.stringify(draft));
+  localStorage.setItem(priceBookStorageKey, JSON.stringify(priceBook));
+  localStorage.setItem(productRecipesStorageKey, JSON.stringify(productRecipes));
+  clearTimeout(costingSaveTimer);
+  costingSaveTimer = setTimeout(async () => {
+    try {
+      await fetch("/api/costing-data", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ingredients: priceBook, recipes: productRecipes }),
+      });
+    } catch {
+      // Keep the local draft if the database is temporarily unavailable.
+    }
+  }, 400);
 }
 
-function renderIngredients() {
-  ingredientRows.innerHTML = ingredients
+async function loadCostingDataFromServer() {
+  try {
+    const response = await fetch("/api/costing-data");
+    if (!response.ok) return;
+    const saved = await response.json();
+    const hasServerData = saved.ingredients?.length || saved.recipes?.length;
+    if (hasServerData) {
+      priceBook = saved.ingredients;
+      productRecipes = saved.recipes;
+      localStorage.setItem(priceBookStorageKey, JSON.stringify(priceBook));
+      localStorage.setItem(productRecipesStorageKey, JSON.stringify(productRecipes));
+    } else if (priceBook.length || productRecipes.length) {
+      saveCostingDraft();
+    }
+  } catch {
+    // Fall back to the local draft for offline development.
+  }
+}
+
+function renderSavedRecipes() {
+  savedRecipeSelect.innerHTML = `<option value="">Choose a saved product</option>${productRecipes
+    .map((recipe) => `<option value="${recipe.id}" ${recipe.id === currentRecipeId ? "selected" : ""}>${recipe.name}</option>`)
+    .join("")}`;
+}
+
+function snapshotCurrentRecipe() {
+  return {
+    id: currentRecipeId || `recipe-${Date.now()}`,
+    name: productNameInput.value.trim(),
+    recipeIngredients: JSON.parse(JSON.stringify(recipeIngredients)),
+    ...Object.fromEntries(Object.entries(costingInputs).map(([key, input]) => [key, input.value])),
+  };
+}
+
+function loadRecipe(recipe) {
+  currentRecipeId = recipe.id;
+  productNameInput.value = recipe.name;
+  recipeIngredients = JSON.parse(JSON.stringify(recipe.recipeIngredients));
+  Object.entries(costingInputs).forEach(([key, input]) => {
+    if (recipe[key] !== undefined) input.value = recipe[key];
+  });
+  renderRecipeIngredients();
+  calculateCosting();
+  renderSavedRecipes();
+}
+
+function resetRecipe() {
+  currentRecipeId = "";
+  productNameInput.value = "";
+  recipeIngredients = [emptyRecipeIngredient()];
+  renderRecipeIngredients();
+  calculateCosting();
+  renderSavedRecipes();
+  clearFeedback(recipeSaveFeedback);
+}
+
+function renderPriceBook() {
+  priceBookRows.innerHTML = priceBook
     .map(
-      (ingredient, index) => `
-        <div class="ingredient-row" data-ingredient-index="${index}">
+      (item, index) => `
+        <div class="ingredient-row price-book-row" data-price-index="${index}">
           <label>
-            Ingredient
-            <input data-ingredient-field="name" type="text" value="${ingredient.name}" placeholder="e.g. Flour" />
-          </label>
-          <label>
-            Used (g)
-            <input data-ingredient-field="amount" type="number" min="0" step="0.1" value="${ingredient.amount}" />
+            Raw material
+            <input data-price-field="name" type="text" value="${item.name}" placeholder="e.g. Flour" />
           </label>
           <label>
             Pack size (g)
-            <input data-ingredient-field="packSize" type="number" min="0" step="1" value="${ingredient.packSize}" />
+            <input data-price-field="packSize" type="number" min="0" step="1" value="${item.packSize}" />
           </label>
           <label>
             Pack price (EUR)
-            <input data-ingredient-field="packPrice" type="number" min="0" step="0.01" value="${ingredient.packPrice}" />
+            <input data-price-field="packPrice" type="number" min="0" step="0.01" value="${item.packPrice}" />
           </label>
-          <button class="ingredient-remove" type="button" data-remove-ingredient="${index}" aria-label="Remove ingredient">×</button>
+          <button class="ingredient-remove" type="button" data-remove-price="${index}" aria-label="Remove raw material">×</button>
         </div>
       `
     )
     .join("");
 }
 
+function renderRecipeIngredients() {
+  recipeRows.innerHTML = recipeIngredients
+    .map(
+      (ingredient, index) => `
+        <div class="ingredient-row recipe-row" data-recipe-index="${index}">
+          <label>
+            Raw material
+            <select data-recipe-field="materialId">
+              <option value="">Choose a material</option>
+              ${priceBook
+                .map((item, itemIndex) => item.name.trim() ? `<option value="${itemIndex}" ${String(itemIndex) === String(ingredient.materialId) ? "selected" : ""}>${item.name}</option>` : "")
+                .join("")}
+            </select>
+          </label>
+          <label>
+            Used in recipe (g)
+            <input data-recipe-field="amount" type="number" min="0" step="any" inputmode="decimal" value="${ingredient.amount}" />
+          </label>
+          <div class="recipe-cost" data-recipe-cost="${index}">${money(recipeIngredientCost(ingredient))}</div>
+          <button class="ingredient-remove" type="button" data-remove-recipe="${index}" aria-label="Remove recipe ingredient">×</button>
+        </div>
+      `
+    )
+    .join("");
+}
+
+function recipeIngredientCost(ingredient) {
+  const item = priceBook[Number(ingredient.materialId)];
+  const amount = Number(ingredient.amount) || 0;
+  if (!item || !Number(item.packSize) || !Number(item.packPrice)) return 0;
+  return (amount / Number(item.packSize)) * Number(item.packPrice);
+}
+
 function calculateCosting() {
-  const ingredientCost = ingredients.reduce((total, ingredient) => {
-    const amount = Number(ingredient.amount) || 0;
-    const packSize = Number(ingredient.packSize) || 0;
-    const packPrice = Number(ingredient.packPrice) || 0;
-    return total + (packSize > 0 ? (amount / packSize) * packPrice : 0);
-  }, 0);
+  const ingredientCost = recipeIngredients.reduce((total, ingredient) => total + recipeIngredientCost(ingredient), 0);
   const yieldCount = Math.max(1, Number(costingInputs.yield.value) || 1);
   const salePrice = Math.max(0, Number(costingInputs.salePrice.value) || 0);
   const energyKwh =
@@ -117,36 +245,103 @@ function calculateCosting() {
   saveCostingDraft();
 }
 
-function initCostingCalculator() {
+async function initCostingCalculator() {
   loadCostingDraft();
-  renderIngredients();
+  await loadCostingDataFromServer();
+  renderPriceBook();
+  renderRecipeIngredients();
+  renderSavedRecipes();
   calculateCosting();
 
-  addIngredientButton.addEventListener("click", () => {
-    ingredients.push(emptyIngredient());
-    renderIngredients();
+  savedRecipeSelect.addEventListener("change", () => {
+    const recipe = productRecipes.find((item) => item.id === savedRecipeSelect.value);
+    if (recipe) loadRecipe(recipe);
+  });
+
+  newRecipeButton.addEventListener("click", resetRecipe);
+
+  saveRecipeButton.addEventListener("click", () => {
+    const name = productNameInput.value.trim();
+    if (!name) {
+      setFeedback(recipeSaveFeedback, "Please enter a product name first.", "error");
+      productNameInput.focus();
+      return;
+    }
+    const recipe = snapshotCurrentRecipe();
+    const existingIndex = productRecipes.findIndex((item) => item.id === recipe.id);
+    if (existingIndex === -1) {
+      productRecipes.push(recipe);
+    } else {
+      productRecipes[existingIndex] = recipe;
+    }
+    currentRecipeId = recipe.id;
+    saveCostingDraft();
+    renderSavedRecipes();
+    setFeedback(recipeSaveFeedback, `${name} saved. You can find it in Saved products.`, "success");
+  });
+
+  addPriceItemButton.addEventListener("click", () => {
+    priceBook.push(emptyPriceItem());
+    renderPriceBook();
+    renderRecipeIngredients();
     calculateCosting();
   });
 
-  ingredientRows.addEventListener("input", (event) => {
-    const field = event.target.closest("[data-ingredient-field]");
-    const row = event.target.closest("[data-ingredient-index]");
+  addRecipeIngredientButton.addEventListener("click", () => {
+    recipeIngredients.push(emptyRecipeIngredient());
+    renderRecipeIngredients();
+    calculateCosting();
+  });
+
+  priceBookRows.addEventListener("input", (event) => {
+    const field = event.target.closest("[data-price-field]");
+    const row = event.target.closest("[data-price-index]");
     if (!field || !row) return;
-    const index = Number(row.dataset.ingredientIndex);
-    const key = field.dataset.ingredientField;
-    ingredients[index][key] = key === "name" ? field.value : Number(field.value) || 0;
+    const index = Number(row.dataset.priceIndex);
+    const key = field.dataset.priceField;
+    priceBook[index][key] = key === "name" ? field.value : Number(field.value) || 0;
+    renderRecipeIngredients();
     calculateCosting();
   });
 
-  ingredientRows.addEventListener("click", (event) => {
-    const removeButton = event.target.closest("[data-remove-ingredient]");
-    if (!removeButton || ingredients.length === 1) return;
-    ingredients.splice(Number(removeButton.dataset.removeIngredient), 1);
-    renderIngredients();
+  priceBookRows.addEventListener("click", (event) => {
+    const removeButton = event.target.closest("[data-remove-price]");
+    if (!removeButton || priceBook.length === 1) return;
+    const removedIndex = Number(removeButton.dataset.removePrice);
+    priceBook.splice(removedIndex, 1);
+    recipeIngredients = recipeIngredients
+      .filter((item) => Number(item.materialId) !== removedIndex)
+      .map((item) => ({
+        ...item,
+        materialId: Number(item.materialId) > removedIndex ? String(Number(item.materialId) - 1) : item.materialId,
+      }));
+    renderPriceBook();
+    renderRecipeIngredients();
+    calculateCosting();
+  });
+
+  recipeRows.addEventListener("input", handleRecipeChange);
+  recipeRows.addEventListener("change", handleRecipeChange);
+  recipeRows.addEventListener("click", (event) => {
+    const removeButton = event.target.closest("[data-remove-recipe]");
+    if (!removeButton || recipeIngredients.length === 1) return;
+    recipeIngredients.splice(Number(removeButton.dataset.removeRecipe), 1);
+    renderRecipeIngredients();
     calculateCosting();
   });
 
   Object.values(costingInputs).forEach((input) => input.addEventListener("input", calculateCosting));
+}
+
+function handleRecipeChange(event) {
+  const field = event.target.closest("[data-recipe-field]");
+  const row = event.target.closest("[data-recipe-index]");
+  if (!field || !row) return;
+  const index = Number(row.dataset.recipeIndex);
+  const key = field.dataset.recipeField;
+  recipeIngredients[index][key] = key === "materialId" ? field.value : Number(field.value) || 0;
+  renderRecipeIngredients();
+  calculateCosting();
 }
 
 function setFeedback(target, message, type = "success") {
@@ -158,6 +353,39 @@ function setFeedback(target, message, type = "success") {
 function clearFeedback(target) {
   target.hidden = true;
   target.textContent = "";
+}
+
+function queueTranslation(form, sourceField, feedbackTarget, selectorAttribute) {
+  const source = form.querySelector(`[${selectorAttribute}="${sourceField.dataset.translateSource}"]`);
+  const target = form.querySelector(`[${selectorAttribute}="${sourceField.dataset.translateTarget}"]`);
+  const text = source.value.trim();
+  if (!text || !target) return;
+  clearTimeout(translationTimers.get(sourceField.dataset.translateSource));
+  const timer = setTimeout(async () => {
+    setFeedback(feedbackTarget, "Translating to English...", "success");
+    try {
+      const response = await fetch("/api/translate-product-field", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, field: sourceField.dataset.translateSource }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to translate this field.");
+      target.value = result.translated;
+      setFeedback(feedbackTarget, "English text filled automatically. You can edit it.", "success");
+    } catch (error) {
+      setFeedback(feedbackTarget, error.message, "error");
+    }
+  }, 700);
+  translationTimers.set(sourceField.dataset.translateSource, timer);
+}
+
+function queueProductTranslation(sourceField) {
+  queueTranslation(productEditForm, sourceField, translationFeedback, "data-edit-field");
+}
+
+function queueNewProductTranslation(sourceField) {
+  queueTranslation(productForm, sourceField, productFeedback, "name");
 }
 
 async function fileToDataUrl(file) {
@@ -187,9 +415,11 @@ function renderProducts() {
     .map(
       (product) => `
         <article class="admin-product-card">
-          <div class="admin-product-head">
+          <div class="admin-product-summary">
+            <img class="admin-product-thumb" src="${product.image}" alt="${product.name}" />
             <div>
               <h3 class="product-title">${product.name}</h3>
+              <p class="muted-text">${product.nameEn || "English name not set"}</p>
               <p class="muted-text">${product.category || "当日限定"} / EUR ${product.price} / ${
                 product.active ? "Live" : "Hidden"
               }</p>
@@ -198,16 +428,8 @@ function renderProducts() {
               ${product.stock === 0 ? "Out of stock" : `${product.stock} left`}
             </span>
           </div>
-
-          <p class="muted-text">Allergens: ${product.allergens.length ? product.allergens.join(" / ") : "None listed"}</p>
-          <div class="admin-product-controls">
-            <input type="number" min="0" value="${product.stock}" data-stock-input="${product.id}" />
-            <button class="small-button" type="button" data-update-stock="${product.id}">Update stock</button>
-            <button class="small-button ghost" type="button" data-toggle-product="${product.id}">
-              ${product.active ? "Hide" : "Publish"}
-            </button>
-            <button class="small-button danger" type="button" data-delete-product="${product.id}">Delete</button>
-          </div>
+          <p class="muted-text">Allergens: ${product.allergens?.length ? product.allergens.join(" / ") : "None listed"}</p>
+          <button class="small-button admin-edit-button" type="button" data-edit-product="${product.id}">Edit product</button>
         </article>
       `
     )
@@ -324,10 +546,40 @@ productForm.addEventListener("submit", async (event) => {
 
 adminProducts.addEventListener("click", async (event) => {
   const updateButton = event.target.closest("[data-update-stock]");
+  const updatePriceButton = event.target.closest("[data-update-price]");
+  const editProductButton = event.target.closest("[data-edit-product]");
   const toggleButton = event.target.closest("[data-toggle-product]");
   const deleteButton = event.target.closest("[data-delete-product]");
 
   try {
+    if (editProductButton) {
+      const productId = editProductButton.dataset.editProduct;
+      const product = productState.find((item) => item.id === productId);
+      if (!product) return;
+      editingProductId = productId;
+      productEditTitle.textContent = product.name;
+      const setValue = (field, value) => {
+        productEditForm.querySelector(`[data-edit-field="${field}"]`).value = value ?? "";
+      };
+      setValue("name", product.name);
+      setValue("nameEn", product.nameEn);
+      setValue("category", product.category);
+      setValue("categoryEn", product.categoryEn);
+      setValue("description", product.description);
+      setValue("descriptionEn", product.descriptionEn);
+      setValue("allergens", (product.allergens || []).join(", "));
+      setValue("allergensEn", (product.allergensEn || []).join(", "));
+      setValue("pickupWindow", product.pickupWindow);
+      setValue("pickupWindowEn", product.pickupWindowEn);
+      setValue("price", product.price);
+      setValue("stock", product.stock);
+      setValue("image", product.image);
+      clearFeedback(productEditFeedback);
+      clearFeedback(translationFeedback);
+      productEditDialog.showModal();
+      return;
+    }
+
     if (updateButton) {
       const productId = updateButton.dataset.updateStock;
       const input = document.querySelector(`[data-stock-input="${productId}"]`);
@@ -339,6 +591,22 @@ adminProducts.addEventListener("click", async (event) => {
       const result = await response.json();
       if (!response.ok) {
         throw new Error(result.error || "Unable to update stock.");
+      }
+      await fetchProducts();
+      return;
+    }
+
+    if (updatePriceButton) {
+      const productId = updatePriceButton.dataset.updatePrice;
+      const input = document.querySelector(`[data-price-input="${productId}"]`);
+      const response = await fetch(`/api/products/${productId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ price: Number(input.value) }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Unable to update price.");
       }
       await fetchProducts();
       return;
@@ -371,6 +639,50 @@ adminProducts.addEventListener("click", async (event) => {
     }
   } catch (error) {
     setFeedback(productFeedback, error.message, "error");
+  }
+});
+
+document.querySelector("#close-product-edit").addEventListener("click", () => productEditDialog.close());
+
+productEditForm.querySelectorAll("[data-translate-source]").forEach((field) => {
+  field.addEventListener("input", () => queueProductTranslation(field));
+});
+
+productForm.querySelectorAll("[data-translate-source]").forEach((field) => {
+  field.addEventListener("input", () => queueNewProductTranslation(field));
+});
+
+productEditForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const getValue = (field) => productEditForm.querySelector(`[data-edit-field="${field}"]`).value.trim();
+  const splitValues = (field) => getValue(field).split(",").map((item) => item.trim()).filter(Boolean);
+  try {
+    const response = await fetch(`/api/products/${editingProductId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: getValue("name"),
+        nameEn: getValue("nameEn"),
+        category: getValue("category"),
+        categoryEn: getValue("categoryEn"),
+        description: getValue("description"),
+        descriptionEn: getValue("descriptionEn"),
+        allergens: splitValues("allergens"),
+        allergensEn: splitValues("allergensEn"),
+        pickupWindow: getValue("pickupWindow"),
+        pickupWindowEn: getValue("pickupWindowEn"),
+        price: Number(getValue("price")),
+        stock: Number(getValue("stock")),
+        image: getValue("image"),
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Unable to save product details.");
+    productEditDialog.close();
+    await fetchProducts();
+    setFeedback(productFeedback, `${result.name} details saved.`, "success");
+  } catch (error) {
+    setFeedback(productEditFeedback, error.message, "error");
   }
 });
 

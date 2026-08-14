@@ -36,7 +36,7 @@
           <form id="product-form" class="stack-form">
             <label>
               Product name
-              <input type="text" name="name" placeholder="e.g. Earl Grey Milk Toast" required />
+              <input type="text" name="name" data-translate-source="name" data-translate-target="nameEn" placeholder="e.g. Earl Grey Milk Toast" required />
             </label>
 
             <label>
@@ -46,7 +46,7 @@
 
             <label>
               Category
-              <input type="text" name="category" placeholder="e.g. Sweet Bread / Bagel / Sourdough" />
+              <input type="text" name="category" data-translate-source="category" data-translate-target="categoryEn" placeholder="e.g. Sweet Bread / Bagel / Sourdough" />
             </label>
 
             <label>
@@ -56,7 +56,7 @@
 
             <label>
               Description
-              <textarea name="description" rows="3" placeholder="Add flavor, texture, or serving notes"></textarea>
+              <textarea name="description" data-translate-source="description" data-translate-target="descriptionEn" rows="3" placeholder="Add flavor, texture, or serving notes"></textarea>
             </label>
 
             <label>
@@ -66,7 +66,7 @@
 
             <label>
               Allergens
-              <input type="text" name="allergens" placeholder="Comma separated, e.g. Wheat, Egg, Dairy" />
+              <input type="text" name="allergens" data-translate-source="allergens" data-translate-target="allergensEn" placeholder="Comma separated, e.g. Wheat, Egg, Dairy" />
             </label>
 
             <label>
@@ -87,7 +87,7 @@
 
             <label>
               Pickup window
-              <input type="text" name="pickupWindow" placeholder="e.g. Sunday, 3:00 PM - 6:00 PM" />
+              <input type="text" name="pickupWindow" data-translate-source="pickupWindow" data-translate-target="pickupWindowEn" placeholder="e.g. Sunday, 3:00 PM - 6:00 PM" />
             </label>
 
             <label>
@@ -138,16 +138,42 @@
           Add the ingredients used in one batch, your oven details, and the selling price. The calculator updates instantly and saves the draft in this browser.
         </p>
 
+        <div class="recipe-toolbar">
+          <label>
+            Product name
+            <input id="cost-product-name" type="text" placeholder="e.g. Sea Salt Butter Sourdough" />
+          </label>
+          <label>
+            Saved products
+            <select id="saved-recipe-select">
+              <option value="">Choose a saved product</option>
+            </select>
+          </label>
+          <button class="small-button ghost" id="new-recipe" type="button">New recipe</button>
+          <button class="small-button" id="save-recipe" type="button">Save product recipe</button>
+          <p id="recipe-save-feedback" class="form-feedback recipe-save-feedback" hidden></p>
+        </div>
+
         <div class="costing-layout">
           <div class="costing-inputs">
             <div class="costing-section-head">
               <div>
-                <p class="eyebrow">Ingredients</p>
-                <h3>What goes into one batch?</h3>
+                <p class="eyebrow">Ingredient price book</p>
+                <h3>Set each raw material price once</h3>
               </div>
-              <button class="small-button ghost" id="add-ingredient" type="button">+ Add ingredient</button>
+              <button class="small-button ghost" id="add-price-item" type="button">+ Add raw material</button>
             </div>
-            <div id="ingredient-rows" class="ingredient-rows"></div>
+            <p class="costing-note">Enter flour, butter, milk, and other package prices here once. They can then be reused across different recipes.</p>
+            <div id="price-book-rows" class="price-book-rows"></div>
+
+            <div class="costing-section-head costing-section-head-spaced">
+              <div>
+                <p class="eyebrow">This product recipe</p>
+                <h3>Choose materials and enter the amount used</h3>
+              </div>
+              <button class="small-button ghost" id="add-recipe-ingredient" type="button">+ Add to recipe</button>
+            </div>
+            <div id="recipe-rows" class="ingredient-rows"></div>
 
             <div class="costing-section-head costing-section-head-spaced">
               <div>
@@ -208,6 +234,36 @@
         <div id="orders-list" class="orders-list"></div>
       </section>
     </main>
+
+    <dialog id="product-edit-dialog" class="admin-edit-dialog">
+      <form id="product-edit-form" class="panel admin-edit-form" method="dialog">
+        <div class="dialog-head">
+          <div>
+            <p class="eyebrow">Edit product</p>
+            <h2 id="product-edit-title">Product details</h2>
+          </div>
+          <button class="icon-button" id="close-product-edit" type="button" aria-label="Close">×</button>
+        </div>
+        <div class="admin-edit-fields">
+          <label>Name (Chinese)<input data-edit-field="name" data-translate-source="name" data-translate-target="nameEn" type="text" required /></label>
+          <label>Name (English)<input data-edit-field="nameEn" type="text" /></label>
+          <label>Category (Chinese)<input data-edit-field="category" data-translate-source="category" data-translate-target="categoryEn" type="text" /></label>
+          <label>Category (English)<input data-edit-field="categoryEn" type="text" /></label>
+          <label>Description (Chinese)<textarea data-edit-field="description" data-translate-source="description" data-translate-target="descriptionEn" rows="3"></textarea></label>
+          <label>Description (English)<textarea data-edit-field="descriptionEn" rows="3"></textarea></label>
+          <label>Allergens (Chinese, comma separated)<input data-edit-field="allergens" data-translate-source="allergens" data-translate-target="allergensEn" type="text" /></label>
+          <label>Allergens (English, comma separated)<input data-edit-field="allergensEn" type="text" /></label>
+          <label>Pickup window (Chinese)<input data-edit-field="pickupWindow" data-translate-source="pickupWindow" data-translate-target="pickupWindowEn" type="text" /></label>
+          <label>Pickup window (English)<input data-edit-field="pickupWindowEn" type="text" /></label>
+          <label>Price (EUR)<input data-edit-field="price" type="number" min="0" step="0.01" required /></label>
+          <label>Stock<input data-edit-field="stock" type="number" min="0" step="1" required /></label>
+          <label class="admin-edit-wide">Image URL<input data-edit-field="image" type="url" required /></label>
+        </div>
+        <p id="product-edit-feedback" class="form-feedback" hidden></p>
+        <p id="translation-feedback" class="form-feedback" hidden></p>
+        <button class="button primary full" type="submit">Save product details</button>
+      </form>
+    </dialog>
 
     <script src="/admin.js" defer></script>
   </body>

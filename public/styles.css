@@ -650,13 +650,18 @@ label {
 }
 
 input,
-textarea {
+textarea,
+select {
   width: 100%;
   border: 1px solid rgba(105, 71, 44, 0.14);
   background: rgba(255, 255, 255, 0.72);
   border-radius: 14px;
   padding: 13px 14px;
   outline: none;
+}
+
+select {
+  appearance: none;
 }
 
 input:focus,
@@ -737,6 +742,27 @@ textarea:focus {
   line-height: 1.7;
 }
 
+.recipe-toolbar {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) minmax(180px, 1fr) auto auto;
+  gap: 12px;
+  align-items: end;
+  margin-top: 22px;
+  padding: 16px;
+  border: 1px dashed rgba(105, 71, 44, 0.18);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.48);
+}
+
+.recipe-toolbar label {
+  font-size: 0.84rem;
+}
+
+.recipe-save-feedback {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
 .costing-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.8fr);
@@ -784,6 +810,21 @@ textarea:focus {
 .ingredient-row input {
   padding: 10px 11px;
   font-size: 0.9rem;
+}
+
+.ingredient-row select {
+  padding: 10px 11px;
+  font-size: 0.9rem;
+}
+
+.recipe-cost {
+  min-height: 38px;
+  padding: 10px 11px;
+  border-radius: 12px;
+  color: var(--accent-strong);
+  background: rgba(196, 105, 63, 0.09);
+  font-weight: 700;
+  line-height: 18px;
 }
 
 .ingredient-remove {
@@ -892,6 +933,48 @@ textarea:focus {
   background: rgba(255, 255, 255, 0.62);
 }
 
+.admin-edit-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(247, 239, 228, 0.62);
+}
+
+.admin-edit-fields label {
+  font-size: 0.82rem;
+}
+
+.admin-edit-fields textarea,
+.admin-edit-fields input {
+  padding: 10px 11px;
+  font-size: 0.9rem;
+}
+
+.admin-edit-wide {
+  grid-column: 1 / -1;
+}
+
+.admin-edit-dialog {
+  width: min(760px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: 0;
+  border: 0;
+  border-radius: 28px;
+  background: transparent;
+  overflow: auto;
+}
+
+.admin-edit-dialog::backdrop {
+  background: rgba(58, 36, 24, 0.34);
+  backdrop-filter: blur(8px);
+}
+
+.admin-edit-form {
+  padding: 28px;
+}
+
 .admin-product-head,
 .order-head {
   display: flex;
@@ -901,7 +984,7 @@ textarea:focus {
 
 .admin-product-controls {
   display: grid;
-  grid-template-columns: 120px 1fr auto auto;
+  grid-template-columns: 120px 1fr 120px 1fr auto auto;
   gap: 10px;
   align-items: center;
 }
@@ -953,6 +1036,10 @@ textarea:focus {
 
   .costing-layout {
     grid-template-columns: 1fr;
+  }
+
+  .recipe-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1134,6 +1221,14 @@ textarea:focus {
     width: 100%;
   }
 
+  .admin-edit-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-edit-wide {
+    grid-column: auto;
+  }
+
   .two-column,
   .admin-product-controls,
   .cancel-form {
@@ -1143,6 +1238,10 @@ textarea:focus {
   .costing-section-head {
     align-items: start;
     flex-direction: column;
+  }
+
+  .recipe-toolbar {
+    grid-template-columns: 1fr;
   }
 
   .ingredient-row,
