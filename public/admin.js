@@ -21,14 +21,14 @@ async function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("图片读取失败"));
+    reader.onerror = () => reject(new Error("Unable to read the image."));
     reader.readAsDataURL(file);
   });
 }
 
 function formatDate(dateString) {
   const date = new Date(dateString);
-  return new Intl.DateTimeFormat("zh-CN", {
+  return new Intl.DateTimeFormat("en-IE", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
@@ -36,7 +36,7 @@ function formatDate(dateString) {
 
 function renderProducts() {
   if (!productState.length) {
-    adminProducts.innerHTML = `<p class="muted-text">还没有商品，先在左侧发布第一款面包吧。</p>`;
+    adminProducts.innerHTML = `<p class="muted-text">No products yet. Publish your first bake from the form.</p>`;
     return;
   }
 
@@ -48,22 +48,22 @@ function renderProducts() {
             <div>
               <h3 class="product-title">${product.name}</h3>
               <p class="muted-text">${product.category || "当日限定"} · €${product.price} · ${
-                product.active ? "上架中" : "已下架"
+                product.active ? "Live" : "Hidden"
               }</p>
             </div>
             <span class="stock-pill ${product.stock === 0 ? "empty" : ""}">
-              ${product.stock === 0 ? "无库存" : `剩余 ${product.stock} 份`}
+              ${product.stock === 0 ? "Out of stock" : `${product.stock} left`}
             </span>
           </div>
 
-          <p class="muted-text">过敏原：${product.allergens.length ? product.allergens.join(" / ") : "未填写"}</p>
+          <p class="muted-text">Allergens: ${product.allergens.length ? product.allergens.join(" / ") : "None listed"}</p>
           <div class="admin-product-controls">
             <input type="number" min="0" value="${product.stock}" data-stock-input="${product.id}" />
-            <button class="small-button" type="button" data-update-stock="${product.id}">更新库存</button>
+            <button class="small-button" type="button" data-update-stock="${product.id}">Update stock</button>
             <button class="small-button ghost" type="button" data-toggle-product="${product.id}">
-              ${product.active ? "下架" : "上架"}
+              ${product.active ? "Hide" : "Publish"}
             </button>
-            <button class="small-button danger" type="button" data-delete-product="${product.id}">删除</button>
+            <button class="small-button danger" type="button" data-delete-product="${product.id}">Delete</button>
           </div>
         </article>
       `
@@ -73,7 +73,7 @@ function renderProducts() {
 
 function renderOrders(orders) {
   if (!orders.length) {
-    ordersList.innerHTML = `<p class="muted-text">还没有客户预约。</p>`;
+    ordersList.innerHTML = `<p class="muted-text">No reservations yet.</p>`;
     return;
   }
 
@@ -86,10 +86,10 @@ function renderOrders(orders) {
               <h3 class="product-title">${order.productName}</h3>
               <p class="muted-text">${formatDate(order.createdAt)}</p>
             </div>
-            <span class="tag">预约 ${order.quantity} 份</span>
+            <span class="tag">${order.quantity} reserved</span>
           </div>
           <p><strong>${order.customerName}</strong> · ${order.customerPhone}</p>
-          <p class="muted-text">${order.note || "无备注"}</p>
+          <p class="muted-text">${order.note || "No notes"}</p>
         </article>
       `
     )
@@ -99,7 +99,7 @@ function renderOrders(orders) {
 async function fetchProducts() {
   const response = await fetch("/api/products");
   if (!response.ok) {
-    throw new Error("加载商品失败");
+    throw new Error("Unable to load products.");
   }
   productState = await response.json();
   renderProducts();
@@ -108,7 +108,7 @@ async function fetchProducts() {
 async function fetchOrders() {
   const response = await fetch("/api/orders");
   if (!response.ok) {
-    throw new Error("加载预约失败");
+    throw new Error("Unable to load reservations.");
   }
   const orders = await response.json();
   renderOrders(orders);
@@ -167,7 +167,7 @@ productForm.addEventListener("submit", async (event) => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.error || "发布失败");
+      throw new Error(result.error || "Unable to publish product.");
     }
 
     productForm.reset();
@@ -195,7 +195,7 @@ adminProducts.addEventListener("click", async (event) => {
       });
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || "更新库存失败");
+        throw new Error(result.error || "Unable to update stock.");
       }
       await fetchProducts();
       return;
@@ -211,7 +211,7 @@ adminProducts.addEventListener("click", async (event) => {
       });
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || "更新状态失败");
+        throw new Error(result.error || "Unable to update product status.");
       }
       await fetchProducts();
       return;
@@ -222,7 +222,7 @@ adminProducts.addEventListener("click", async (event) => {
       const response = await fetch(`/api/products/${productId}`, { method: "DELETE" });
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || "删除失败");
+        throw new Error(result.error || "Unable to delete product.");
       }
       await Promise.all([fetchProducts(), fetchOrders()]);
     }

@@ -54,6 +54,8 @@ const translations = {
     orderNoteLabel: "备注",
     orderNotePlaceholder: "例如少糖、晚一点来取",
     orderSubmit: "提交预约",
+    orderSubmitting: "提交中…",
+    orderSubmitted: "已提交",
     emptyEyebrow: "暂未开单",
     emptyTitle: "这次还没有开放预约的面包",
     emptyText: "这里会显示下一轮开放预约的面包，开单后会更新在这里。",
@@ -119,6 +121,8 @@ const translations = {
     orderNoteLabel: "Notes",
     orderNotePlaceholder: "For example: less sweet, later pickup",
     orderSubmit: "Submit Reservation",
+    orderSubmitting: "Submitting…",
+    orderSubmitted: "Submitted",
     emptyEyebrow: "No Drop Live",
     emptyTitle: "There are no breads open for reservation right now.",
     emptyText: "The next release will appear here once reservations open again.",
@@ -148,6 +152,20 @@ let products = [];
 let selectedProduct = null;
 // English is the default for first-time visitors; keep any saved preference.
 let currentLocale = localStorage.getItem("mochi-locale") || "en";
+let isSubmittingOrder = false;
+let orderSubmitted = false;
+const orderSubmitButton = orderForm.querySelector('button[type="submit"]');
+
+function localizeApiError(message, fallbackKey) {
+  const errorMap = {
+    "请输入姓名": currentLocale === "en" ? "Please enter your name." : "请填写姓名",
+    "请填写有效手机号": currentLocale === "en" ? "Please enter a valid phone number." : "请填写有效手机号",
+    "预约数量必须大于 0": currentLocale === "en" ? "Reservation quantity must be greater than 0." : "预约数量必须大于 0",
+    "库存不足，请减少数量后再试": currentLocale === "en" ? "Not enough stock for this quantity." : "库存不足，请减少数量后再试",
+    "商品不存在或已下架": currentLocale === "en" ? "This item is unavailable." : "商品不存在或已下架",
+  };
+  return errorMap[message] || message || t(fallbackKey);
+}
 
 function t(key) {
   return translations[currentLocale][key];
@@ -315,6 +333,10 @@ function openOrderDialog(productId) {
   }
 
   orderForm.reset();
+  isSubmittingOrder = false;
+  orderSubmitted = false;
+  orderSubmitButton.disabled = false;
+  orderSubmitButton.textContent = t("orderSubmit");
   orderFeedback.hidden = true;
   orderSuccessCode.hidden = true;
   syncOrderDialog();
@@ -371,9 +393,13 @@ orderDialog.addEventListener("click", (event) => {
 orderForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  if (!selectedProduct) {
+  if (!selectedProduct || isSubmittingOrder || orderSubmitted) {
     return;
   }
+
+  isSubmittingOrder = true;
+  orderSubmitButton.disabled = true;
+  orderSubmitButton.textContent = t("orderSubmitting");
 
   const formData = new FormData(orderForm);
   const payload = {
@@ -393,7 +419,7 @@ orderForm.addEventListener("submit", async (event) => {
 
     const result = await response.json();
     if (!response.ok) {
-      throw new Error(result.error || t("orderFailed"));
+      throw new Error(localizeApiError(result.error, "orderFailed"));
     }
 
     const productName = localizedValue(selectedProduct, "name", "nameEn", "");
@@ -402,9 +428,15 @@ orderForm.addEventListener("submit", async (event) => {
     orderSuccessCode.textContent = t("orderSuccessCode")(result.order.id);
     showOrderFeedback(t("orderSuccessFeedback"), "success");
     cancelForm.orderId.value = result.order.id;
+    orderSubmitted = true;
+    orderSubmitButton.textContent = t("orderSubmitted");
     await loadProducts();
   } catch (error) {
-    showOrderFeedback(error.message, "error");
+    showOrderFeedback(localizeApiError(error.message, "orderFailed"), "error");
+    orderSubmitButton.disabled = false;
+    orderSubmitButton.textContent = t("orderSubmit");
+  } finally {
+    isSubmittingOrder = false;
   }
 });
 

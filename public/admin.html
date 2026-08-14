@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mochi Bakehouse 后台</title>
+    <title>Mochi Bakehouse Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -16,11 +16,11 @@
     <div class="grain"></div>
     <main class="admin-layout">
       <section class="admin-intro">
-        <a class="admin-link back-link" href="/index.html">返回前台</a>
-        <p class="eyebrow">后台管理</p>
-        <h1>上新面包、控制库存、查看预约</h1>
+        <a class="admin-link back-link" href="/index.html">Back to storefront</a>
+        <p class="eyebrow">Admin</p>
+        <h1>Add bakes, manage stock, and view reservations</h1>
         <p>
-          这里可以上传商品照片，设置价格、过敏原、剩余个数和取货时间。提交后前台会自动更新。
+          Upload product photos, set pricing, allergens, stock, and pickup windows. The storefront updates automatically after you save.
         </p>
       </section>
 
@@ -28,15 +28,15 @@
         <article class="panel">
           <div class="panel-head">
             <div>
-              <p class="eyebrow">新增商品</p>
-              <h2>发布新的烘焙款式</h2>
+              <p class="eyebrow">Add a product</p>
+              <h2>Publish a new bake</h2>
             </div>
           </div>
 
           <form id="product-form" class="stack-form">
             <label>
-              面包名称
-              <input type="text" name="name" placeholder="例如 伯爵奶酥吐司" required />
+              Product name
+              <input type="text" name="name" placeholder="e.g. Earl Grey Milk Toast" required />
             </label>
 
             <label>
@@ -45,8 +45,8 @@
             </label>
 
             <label>
-              分类
-              <input type="text" name="category" placeholder="例如 甜面包 / 欧包 / 贝果" />
+              Category
+              <input type="text" name="category" placeholder="e.g. Sweet Bread / Bagel / Sourdough" />
             </label>
 
             <label>
@@ -55,8 +55,8 @@
             </label>
 
             <label>
-              商品描述
-              <textarea name="description" rows="3" placeholder="写一点口感、风味或推荐吃法"></textarea>
+              Description
+              <textarea name="description" rows="3" placeholder="Add flavor, texture, or serving notes"></textarea>
             </label>
 
             <label>
@@ -65,8 +65,8 @@
             </label>
 
             <label>
-              过敏原
-              <input type="text" name="allergens" placeholder="用逗号分隔，例如 小麦, 鸡蛋, 奶制品" />
+              Allergens
+              <input type="text" name="allergens" placeholder="Comma separated, e.g. Wheat, Egg, Dairy" />
             </label>
 
             <label>
@@ -76,18 +76,18 @@
 
             <div class="two-column">
               <label>
-                价格（EUR）
+                Price (EUR)
                 <input type="number" name="price" min="0" step="0.01" placeholder="38.00" required />
               </label>
               <label>
-                数量
+                Stock
                 <input type="number" name="stock" min="0" step="1" placeholder="10" required />
               </label>
             </div>
 
             <label>
-              取货时间
-              <input type="text" name="pickupWindow" placeholder="例如 周日下午 3:00 - 6:00" />
+              Pickup window
+              <input type="text" name="pickupWindow" placeholder="e.g. Sunday, 3:00 PM - 6:00 PM" />
             </label>
 
             <label>
@@ -96,30 +96,30 @@
             </label>
 
             <label>
-              照片链接
+              Image URL
               <input type="url" name="imageUrl" placeholder="https://..." />
             </label>
 
             <label>
-              或上传照片
+              Or upload an image
               <input type="file" name="imageFile" accept="image/*" />
             </label>
 
             <label class="checkbox-row">
               <input type="checkbox" name="active" checked />
-              立即上架显示在前台
+              Publish immediately on the storefront
             </label>
 
             <p id="product-feedback" class="form-feedback" hidden></p>
-            <button class="button primary full" type="submit">发布商品</button>
+            <button class="button primary full" type="submit">Publish product</button>
           </form>
         </article>
 
         <article class="panel">
           <div class="panel-head">
             <div>
-              <p class="eyebrow">商品管理</p>
-              <h2>当前在售面包</h2>
+              <p class="eyebrow">Product management</p>
+              <h2>Current products</h2>
             </div>
           </div>
           <div id="admin-products" class="admin-products"></div>
@@ -129,8 +129,8 @@
       <section class="panel orders-panel">
         <div class="panel-head">
           <div>
-            <p class="eyebrow">预约记录</p>
-            <h2>客户提交的数量与联系方式</h2>
+            <p class="eyebrow">Reservations</p>
+            <h2>Customer quantities and contact details</h2>
           </div>
         </div>
         <div id="orders-list" class="orders-list"></div>
