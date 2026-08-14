@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: mochi-bakehouse
+    runtime: node
+    plan: free
+    autoDeploy: true
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 26.7.0
+      - key: MONGODB_DB
+        value: mochi_bakehouse
+      - key: MONGODB_URI
+        sync: false
