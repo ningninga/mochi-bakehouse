@@ -40,3 +40,5 @@ node server.js
 
 - 前台：`http://127.0.0.1:3000`
 - 后台：`http://127.0.0.1:3000/admin.html`
+
+部署到 Render 时，服务会自动使用 Render 提供的 `PORT`，并监听 `0.0.0.0`。

@@ -6,7 +6,9 @@ const { URL, pathToFileURL } = require("url");
 loadEnvFile(path.join(__dirname, ".env"));
 loadEnvFile(path.join(__dirname, ".env.local"));
 
-const host = "127.0.0.1";
+// Render requires the server to listen on all interfaces. Keep HOST
+// configurable so local development can still override it if needed.
+const host = process.env.HOST || "0.0.0.0";
 const port = Number(process.env.PORT || 3000);
 const publicDir = path.join(__dirname, "public");
 const dataDir = path.join(__dirname, "work", "data");
