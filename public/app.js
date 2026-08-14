@@ -16,8 +16,10 @@ const translations = {
     pageTitle: "Mochi Bakehouse",
     brandEyebrow: "用爱烘焙",
     heroEyebrow: "小店介绍 · 手作烘焙 · 限量预约",
-    heroTitle: "一个由烘焙热爱撑起来的小小面包店",
-    heroText: "你好，我是一个对烘焙上头的爱好者。Mochi Bakehouse 是我用热爱慢慢做起来的小店，每一批面包都亲手准备、认真烘焙。喜欢的话，可以看看这次出炉的款式，提前预约你的那一份。",
+    heroTitleBefore: "一个由烘焙热爱撑起来的小小",
+    heroTitleLove: "面包店",
+    heroTitleAfter: "",
+    heroText: "你好，我是一个热爱烘焙的人，也一直认真对待每一次揉面、发酵和出炉。Mochi Bakehouse 是我用心经营的小店，每一批面包都亲手准备。喜欢的话，可以看看这次出炉的款式，提前预约你的那一份。",
     heroPrimaryCta: "查看本次出炉",
     heroSecondaryCta: "了解预约方式",
     navAbout: "关于小店",
@@ -78,7 +80,7 @@ const translations = {
     reserveButton: "预约",
     disabledReserveButton: "暂不可订",
     loadError: "加载商品失败",
-    orderHelper: (stock, pickup) => `这次还可预约 ${stock} 份，取货时间：${pickup}，取货地点：Dublin 2`,
+    orderHelper: (stock) => `这次还可预约 ${stock} 份，取货地点：Dublin 2`,
     orderFailed: "预约失败",
     orderSuccessBanner: (name, remaining) => `已收到 ${name} 的预约，现在还可预约 ${remaining} 份。`,
     orderSuccessCode: (id) => `预约成功。你的预约编号是 ${id}，如果之后需要取消，请保留这个编号。`,
@@ -91,8 +93,10 @@ const translations = {
     pageTitle: "Mochi Bakehouse",
     brandEyebrow: "Baked with love",
     heroEyebrow: "About the shop / Handmade bakes / Limited reservations",
-    heroTitle: "A little bakehouse built on a whole lot of love for baking.",
-    heroText: "Hi, I'm a baking-obsessed home baker, and Mochi Bakehouse is the little shop I'm building one batch at a time. Every bake is prepared by hand and made with care. Browse this release and reserve your favorites before they're gone.",
+    heroTitleBefore: "A little bakehouse built on a whole lot of",
+    heroTitleLove: "love",
+    heroTitleAfter: "for baking.",
+    heroText: "Hi, I'm a passionate home baker who takes every mix, proof, and bake seriously. Mochi Bakehouse is my small shop, made one careful batch at a time. Browse this release and reserve your favorites before they're gone.",
     heroPrimaryCta: "View This Release",
     heroSecondaryCta: "How Reservations Work",
     navAbout: "About",
@@ -153,7 +157,7 @@ const translations = {
     reserveButton: "Reserve",
     disabledReserveButton: "Unavailable",
     loadError: "Unable to load products",
-    orderHelper: (stock, pickup) => `${stock} left to reserve. Pickup window: ${pickup}. Pickup: Dublin 2.`,
+    orderHelper: (stock) => `${stock} left to reserve. Pickup: Dublin 2.`,
     orderFailed: "Reservation failed",
     orderSuccessBanner: (name, remaining) => `Your reservation for ${name} is in. ${remaining} left to reserve.`,
     orderSuccessCode: (id) => `Reservation confirmed. Your reservation code is ${id}. Keep it if you need to cancel later.`,
@@ -219,6 +223,7 @@ function showCancelFeedback(message, type = "error") {
 
 function applyStaticTranslations() {
   document.documentElement.lang = currentLocale === "zh" ? "zh-CN" : "en";
+  document.body.classList.toggle("locale-en", currentLocale === "en");
   document.title = t("pageTitle");
 
   document.querySelectorAll("[data-i18n]").forEach((element) => {
@@ -266,7 +271,6 @@ function renderProducts() {
       const name = localizedValue(product, "name", "nameEn", "");
       const category = localizedValue(product, "category", "categoryEn", t("defaultCategory"));
       const description = localizedValue(product, "description", "descriptionEn", t("defaultDescription"));
-      const pickupWindow = localizedValue(product, "pickupWindow", "pickupWindowEn", t("pickupFallback"));
       const allergensSource =
         currentLocale === "en" && Array.isArray(product.allergensEn) && product.allergensEn.length
           ? product.allergensEn
@@ -297,7 +301,6 @@ function renderProducts() {
 
             <div class="product-footer">
               <div class="meta-stack">
-                <p class="product-meta">${t("pickupWindow")(pickupWindow)}</p>
                 <p class="product-meta">${t("pickupLocation")}</p>
               </div>
               <button class="button primary" type="button" data-order-id="${product.id}" ${
@@ -337,9 +340,8 @@ function syncOrderDialog() {
     return;
   }
   const name = localizedValue(selectedProduct, "name", "nameEn", "");
-  const pickupWindow = localizedValue(selectedProduct, "pickupWindow", "pickupWindowEn", t("pickupFallback"));
   orderProductName.textContent = name;
-  orderHelper.textContent = t("orderHelper")(selectedProduct.stock, pickupWindow);
+  orderHelper.textContent = t("orderHelper")(selectedProduct.stock);
 }
 
 function openOrderDialog(productId) {

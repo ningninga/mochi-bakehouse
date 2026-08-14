@@ -66,15 +66,24 @@ textarea {
 }
 
 .hero {
-  padding: 28px max(16px, 4vw) 40px;
+  padding: 28px 0 40px;
 }
 
 .topbar,
 .hero-panel,
 .section,
 .admin-layout {
-  width: min(1180px, 100%);
+  width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
+}
+
+.love-mark {
+  color: #b5483e;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1rem;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  text-transform: none;
 }
 
 .topbar {
@@ -239,6 +248,20 @@ textarea {
   margin-bottom: 18px;
 }
 
+.hero-love {
+  font-family: inherit;
+  font-style: normal;
+  font-weight: inherit;
+  white-space: nowrap;
+}
+
+.locale-en .hero-love {
+  color: #b5483e;
+  font-family: "Playfair Display", Georgia, serif;
+  font-style: italic;
+  font-weight: 700;
+}
+
 .hero-text,
 .hero-highlight li,
 .intro-cards p,
@@ -399,7 +422,7 @@ textarea {
 }
 
 .section {
-  padding: 0 max(16px, 4vw) 40px;
+  padding: 0 0 40px;
 }
 
 .intro-strip {
@@ -863,8 +886,6 @@ textarea:focus {
   }
 
   .section {
-    padding-right: 16px;
-    padding-left: 16px;
     padding-bottom: 32px;
   }
 
