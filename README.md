@@ -23,6 +23,8 @@ A small-batch bakery site for showcasing breads, bagels, cakes, and desserts.
 
 Copy `.env.example` to `.env.local`, then set the values. `ADMIN_PASSWORD` controls the admin login password.
 
+For new-order email notifications, set `RESEND_API_KEY` and `ORDER_NOTIFICATION_EMAIL`. The default `RESEND_FROM_EMAIL` works for initial testing; verify a custom sending domain in Resend before using a branded sender address.
+
 ```env
 MONGODB_URI=mongodb+srv://USERNAME:PASSWORD@cluster0.typfunz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 MONGODB_DB=mochi_bakehouse

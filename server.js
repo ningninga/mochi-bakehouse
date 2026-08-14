@@ -21,6 +21,9 @@ const mongoBundlePath = process.env.MONGODB_BUNDLE_PATH || path.join(vendorDir, 
 const mongoDbName = process.env.MONGODB_DB || "mochi_bakehouse";
 const adminPassword = process.env.ADMIN_PASSWORD || "mochi-admin-2026";
 const adminSessionCookie = "mochi_admin_session";
+const resendApiKey = process.env.RESEND_API_KEY || "";
+const orderNotificationEmail = process.env.ORDER_NOTIFICATION_EMAIL || "";
+const resendFromEmail = process.env.RESEND_FROM_EMAIL || "Mochi Bakehouse <onboarding@resend.dev>";
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -176,6 +179,57 @@ function requireAdmin(req, res) {
   }
   sendJson(res, 401, { error: "Admin authentication required." });
   return false;
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+async function sendOrderNotification(order, product) {
+  if (!resendApiKey || !orderNotificationEmail) {
+    return;
+  }
+
+  const productName = product?.nameEn || product?.name || "Product";
+  const subject = `New Mochi Bakehouse reservation: ${productName}`;
+  const html = `
+    <h2>New reservation received</h2>
+    <p><strong>Product:</strong> ${escapeHtml(productName)}</p>
+    <p><strong>Quantity:</strong> ${escapeHtml(order.quantity)}</p>
+    <p><strong>Customer:</strong> ${escapeHtml(order.customerName)}</p>
+    <p><strong>Phone:</strong> ${escapeHtml(order.customerPhone)}</p>
+    <p><strong>Notes:</strong> ${escapeHtml(order.note || "No notes")}</p>
+    <p><strong>Reservation ID:</strong> ${escapeHtml(order.id)}</p>
+    <p><strong>Received:</strong> ${escapeHtml(order.createdAt)}</p>
+  `;
+
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: resendFromEmail,
+        to: [orderNotificationEmail],
+        subject,
+        html,
+      }),
+    });
+
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      throw new Error(result.message || "Resend rejected the notification.");
+    }
+  } catch (error) {
+    console.error(`Order notification failed: ${error.message}`);
+  }
 }
 
 function parseBody(req) {
@@ -775,6 +829,8 @@ function createRequestHandler(storage) {
           const payload = await parseBody(req);
           const orderInput = validateOrderPayload(payload);
           const result = await storage.createOrder(orderInput);
+          const product = (await storage.getProducts()).find((item) => item.id === orderInput.productId);
+          await sendOrderNotification(result.order, product);
           sendJson(res, 201, { success: true, ...result });
           return;
         }
